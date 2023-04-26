@@ -10,8 +10,8 @@ type Config struct {
 	isDebug *bool `yaml:"is_debug env-required:true"`
 	Listen  struct {
 		Type   string `yaml:"type" env-default:"port"`
-		BindIp string `yaml:"bind_ip" env-default:"127.0.0.1"`
-		Port   string `yaml:"port" env-default:"8080"`
+		BindIp string `yaml:"bind_ip" env-default:"0.0.0.0"`
+		Port   string `yaml:"port" env-default:"8000"`
 	} `yaml:"listen"`
 }
 
