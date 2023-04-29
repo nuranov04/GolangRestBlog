@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"go.mod/internal/apperror"
 	"go.mod/internal/user"
 	"go.mod/pkg/logging"
 	"go.mongodb.org/mongo-driver/bson"
@@ -54,8 +55,7 @@ func (d *db) FindOne(ctx context.Context, id string) (u user.User, err error) {
 	filter := bson.M{"_id": oid}
 	result := d.collection.FindOne(ctx, filter)
 	if result.Err() != nil {
-		// TODO 404
-		return u, fmt.Errorf("failed to find one user by id: %s", id)
+		return u, apperror.ErrorNotFound
 	}
 	if err = result.Decode(&u); err != nil {
 		return u, fmt.Errorf("failed to decode one user from db due error id: %v", err)
@@ -89,8 +89,7 @@ func (d *db) Update(ctx context.Context, user user.User) error {
 		return fmt.Errorf("failed to execute update user query. error: %v", err)
 	}
 	if result.MatchedCount == 0 {
-		// TODO ErrorQuantityNotFound
-		return fmt.Errorf("not found")
+		return apperror.ErrorNotFound
 	}
 	d.logger.Trace("Matched %d, documents modified %d documents", result.ModifiedCount, result.ModifiedCount)
 	return nil
@@ -104,7 +103,7 @@ func (d *db) Delete(ctx context.Context, id string) error {
 	filter := bson.M{"_id": objectId}
 	result, err := d.collection.DeleteOne(ctx, filter)
 	if err != nil {
-		return fmt.Errorf("failed to execute query. error: %v", err)
+		return apperror.ErrorNotFound
 	}
 	if result.DeletedCount == 0 {
 		return fmt.Errorf("not found")
