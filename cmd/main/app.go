@@ -6,8 +6,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"go.mod/internal/config"
 	"go.mod/internal/user"
-	"go.mod/internal/user/db"
-	"go.mod/pkg/client/mongodb"
+	"go.mod/pkg/client/postgresql"
 	"go.mod/pkg/logging"
 	"log"
 	"net"
@@ -25,32 +24,10 @@ func main() {
 	router := httprouter.New()
 
 	cfg := config.GetConfig()
-	cfgMongo := cfg.MongoDb
-	mongoDBClient, err := mongodb.NewClient(
-		context.Background(),
-		cfgMongo.Host,
-		cfgMongo.Port,
-		cfgMongo.Username,
-		cfgMongo.Password,
-		cfgMongo.Database,
-		cfgMongo.AuthDB,
-	)
+	postgresClient, err := postgresql.NewClient(context.Background(), 3, cfg.Storage)
 	if err != nil {
-		panic(err)
+		logger.Fatal(err)
 	}
-	storage := db.NewStorage(mongoDBClient, cfgMongo.Collection, logger)
-
-	u := user.User{
-		ID:           "",
-		Username:     "admin",
-		PasswordHash: "admin",
-		Email:        "admin@gmail.com",
-	}
-	user1, err := storage.Create(context.Background(), u)
-	if err != nil {
-		panic(err)
-	}
-	logger.Info(user1)
 
 	logger.Info("Register User handler")
 	userHandler := user.NewUserHandler(*logger)

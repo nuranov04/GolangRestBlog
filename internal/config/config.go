@@ -13,15 +13,15 @@ type Config struct {
 		BindIp string `yaml:"bind_ip" env-default:"0.0.0.0"`
 		Port   string `yaml:"port" env-default:"8000"`
 	} `yaml:"listen"`
-	MongoDb struct {
-		Host       string `json:"host"`
-		Port       string `json:"port"`
-		Database   string `json:"database"`
-		AuthDB     string `json:"auth_db"`
-		Username   string `json:"username"`
-		Password   string `json:"password"`
-		Collection string `json:"collection"`
-	} `json:"mongodb"`
+	Storage StorageConfig `yaml:"storage"`
+}
+
+type StorageConfig struct {
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+	Database string `json:"database"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 var instance *Config

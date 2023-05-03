@@ -13,3 +13,9 @@ mongodb:
   username:
   password:
   collection: users
+storage:
+  host: localhost
+  port: 5432
+  database: goblog
+  username: postgres
+  password: 123
