@@ -6,10 +6,10 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go.mod/pkg/logging"
 	"go.mod/pkg/utils"
 
 	"go.mod/internal/config"
-	"log"
 	"time"
 )
 
@@ -21,8 +21,10 @@ type Client interface {
 }
 
 func NewClient(ctx context.Context, maxAttempts int, sc config.StorageConfig) (pool *pgxpool.Pool, err error) {
+	logger := logging.GetLogger()
 	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", sc.Username, sc.Password, sc.Host, sc.Port, sc.Database)
-	err = utils.DoWithTries(func() error {
+	logger.Info(dsn)
+	err = repeatable.DoWithTries(func() error {
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
@@ -35,7 +37,7 @@ func NewClient(ctx context.Context, maxAttempts int, sc config.StorageConfig) (p
 	}, maxAttempts, 5*time.Second)
 
 	if err != nil {
-		log.Fatal("error do with tries postgresql")
+		logger.Fatal("error do with tries postgresql")
 	}
 
 	return pool, nil

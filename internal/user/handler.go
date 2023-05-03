@@ -1,6 +1,8 @@
 package user
 
 import (
+	"context"
+	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"go.mod/internal/handlers"
 	"go.mod/pkg/logging"
@@ -13,12 +15,14 @@ const (
 )
 
 type handler struct {
-	logger logging.Logger
+	logger     logging.Logger
+	repository Storage
 }
 
-func NewUserHandler(logger logging.Logger) handlers.Handler {
+func NewUserHandler(logger logging.Logger, storage Storage) handlers.Handler {
 	return &handler{
-		logger: logger,
+		logger:     logger,
+		repository: storage,
 	}
 }
 
@@ -32,10 +36,18 @@ func (h handler) Register(router *httprouter.Router) {
 }
 
 func (h handler) GetList(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	w.WriteHeader(200)
-	h.logger.Info("Get User List")
-	w.Write([]byte("This is user list"))
-
+	all, err := h.repository.FindAll(context.TODO())
+	if err != nil {
+		w.WriteHeader(400)
+		return
+	}
+	userListBytes, err := json.Marshal(all)
+	if err != nil {
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(userListBytes)
+	return
 }
 
 func (h handler) CreateUser(w http.ResponseWriter, request *http.Request, params httprouter.Params) {

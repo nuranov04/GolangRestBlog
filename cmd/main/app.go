@@ -6,6 +6,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"go.mod/internal/config"
 	"go.mod/internal/user"
+	"go.mod/internal/user/db"
 	"go.mod/pkg/client/postgresql"
 	"go.mod/pkg/logging"
 	"log"
@@ -24,13 +25,16 @@ func main() {
 	router := httprouter.New()
 
 	cfg := config.GetConfig()
+	logger.Info("read application configs")
+
 	postgresClient, err := postgresql.NewClient(context.Background(), 3, cfg.Storage)
 	if err != nil {
 		logger.Fatal(err)
 	}
+	repository := db.NewRepository(postgresClient, logger)
 
 	logger.Info("Register User handler")
-	userHandler := user.NewUserHandler(*logger)
+	userHandler := user.NewUserHandler(*logger, repository)
 	userHandler.Register(router)
 
 	start(router, cfg, logger)
