@@ -92,9 +92,9 @@ func (h handler) GetUserById(w http.ResponseWriter, request *http.Request) error
 func (h handler) GetUserByUsername(w http.ResponseWriter, request *http.Request) error {
 	username := request.URL.Query().Get("username")
 	userObj, err := h.service.FindOneByUsername(context.TODO(), username)
-	//if err != nil {
-	//	return err
-	//}
+	if err != nil {
+		return err
+	}
 	userObjBytes, err := json.Marshal(userObj)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
