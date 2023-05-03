@@ -41,24 +41,6 @@ func (r *repository) Create(ctx context.Context, user user.User) error {
 	return nil
 }
 
-func (r *repository) FindOneById(ctx context.Context, id int) (user.User, error) {
-	q := `
-		SELECT id, username, email FROM public.user WHERE id = $1
-	`
-
-	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(q)))
-
-	var userInfo user.User
-	err := r.client.QueryRow(ctx, q, id).Scan(&userInfo.ID, &userInfo.Username, &userInfo.Email)
-	r.logger.Info(err)
-	if err != nil {
-		return user.User{}, err
-	}
-
-	return userInfo, nil
-
-}
-
 func (r *repository) FindAll(ctx context.Context) (u []user.User, err error) {
 	q := `SELECT id, username, email FROM public.user`
 	query, err := r.client.Query(ctx, q)
@@ -86,12 +68,62 @@ func (r *repository) FindAll(ctx context.Context) (u []user.User, err error) {
 
 }
 
+func (r *repository) FindOneById(ctx context.Context, id int) (user.User, error) {
+	q := `
+		SELECT id, username, email FROM public.user WHERE id = $1
+	`
+
+	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(q)))
+
+	var userInfo user.User
+	err := r.client.QueryRow(ctx, q, id).Scan(&userInfo.ID, &userInfo.Username, &userInfo.Email)
+	if err != nil {
+		return user.User{}, err
+	}
+
+	return userInfo, nil
+
+}
+
+func (r *repository) FindOneByUsername(ctx context.Context, username string) (user.User, error) {
+	q := `
+		SELECT id, username, email FROM public.user WHERE username = $1
+	`
+	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(q)))
+
+	var userInfo user.User
+
+	err := r.client.QueryRow(ctx, q, username).Scan(&userInfo.ID, &userInfo.Username, &userInfo.Email)
+	if err != nil {
+		return user.User{}, err
+	}
+
+	return userInfo, nil
+
+}
+
+func (r *repository) FindOneByEmail(ctx context.Context, email string) (user.User, error) {
+	q := `
+		SELECT id, username, email FROM public.user WHERE email = $1
+	`
+	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(q)))
+
+	var userInfo user.User
+
+	err := r.client.QueryRow(ctx, q, email).Scan(&userInfo.ID, &userInfo.Username, &userInfo.Email)
+	if err != nil {
+		return user.User{}, err
+	}
+
+	return userInfo, nil
+
+}
+
 func (r *repository) Update(ctx context.Context, user user.User) error {
 	//TODO implement me
 	panic("implement me")
 }
 
 func (r *repository) Delete(ctx context.Context, id string) error {
-	//TODO implement me
-	panic("implement me")
+	return fmt.Errorf("")
 }

@@ -36,6 +36,24 @@ func (s Service) FindOneById(ctx context.Context, id int) (User, error) {
 
 }
 
+func (s Service) FindOneByUsername(ctx context.Context, username string) (User, error) {
+	obj, err := s.storage.FindOneByUsername(ctx, username)
+	if err != nil {
+		return User{}, err
+	}
+	return obj, nil
+
+}
+
+func (s Service) FindOneByEmail(ctx context.Context, email string) (User, error) {
+	obj, err := s.storage.FindOneByUsername(ctx, email)
+	if err != nil {
+		return User{}, err
+	}
+	return obj, nil
+
+}
+
 func NewService(storage Storage, logger *logging.Logger) *Service {
 	return &Service{
 		storage: storage,
