@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	ErrorNotFound = NewAppError("not found", "US-000003", "")
+	ErrorNotFound    = NewAppError("not found", "US-000003", "")
+	UserAlreadyExist = NewAppError("user already exist", "US-000005", "")
 )
 
 type AppError struct {
@@ -45,7 +46,7 @@ func systemError(developerMessage string) *AppError {
 }
 
 func BadRequestError(message string) *AppError {
-	return NewAppError(message, "NS-000002", "some thing wrong with user data")
+	return NewAppError(message, "NS-000002", "some thing wrong with data")
 }
 
 func APIError(code, message, developerMessage string) *AppError {

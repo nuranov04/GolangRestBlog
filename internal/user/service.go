@@ -13,7 +13,6 @@ type Service struct {
 func (s Service) Create(ctx context.Context, user User) error {
 	err := s.storage.Create(ctx, user)
 	if err != nil {
-		s.logger.Fatalf("failed due create user in Service.Create. err: %e", err)
 		return err
 	}
 	return nil

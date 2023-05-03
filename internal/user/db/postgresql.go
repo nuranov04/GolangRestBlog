@@ -27,10 +27,9 @@ func NewRepository(client postgresql.Client, logger *logging.Logger) user.Storag
 }
 
 func (r *repository) Create(ctx context.Context, user user.User) error {
-	q := `INSERT INTO public.user (username, email, password_hash) VALUES ($1, $2, $3) `
+	q := `INSERT INTO public.user (username, email, password_hash) VALUES ($1, $2, $3) RETURNING username, email`
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(q)))
-
-	if err := r.client.QueryRow(ctx, q, user.Username, user.Email, user.PasswordHash).Scan(&user.ID); err != nil {
+	if err := r.client.QueryRow(ctx, q, user.Username, user.Email, user.PasswordHash).Scan(&user.Username, &user.Email); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
 			r.logger.Error(newErr)

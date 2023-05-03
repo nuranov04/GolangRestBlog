@@ -56,6 +56,7 @@ func (h handler) CreateUser(w http.ResponseWriter, request *http.Request) error 
 	}
 
 	err := h.service.Create(context.TODO(), CreateUser)
+	h.logger.Info("ERROR!!!!: ", err)
 	if err != nil {
 		return err
 	}
