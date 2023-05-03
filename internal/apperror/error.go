@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	ErrorNotFound = NewAppError(nil, "not found", "", "US-000003")
+	ErrorNotFound = NewAppError("not found", "US-000003", "")
 )
 
 type AppError struct {
@@ -17,7 +17,7 @@ type AppError struct {
 }
 
 func (e *AppError) Error() string {
-	return e.Message
+	return e.Err.Error()
 }
 
 func (e *AppError) Unwrap() error { return e.Err }
@@ -30,7 +30,7 @@ func (e *AppError) Marshal() []byte {
 	return marshal
 }
 
-func NewAppError(err error, message, developerMessage, code string) *AppError {
+func NewAppError(message, code, developerMessage string) *AppError {
 
 	return &AppError{
 		Err:              fmt.Errorf(message),
@@ -38,4 +38,20 @@ func NewAppError(err error, message, developerMessage, code string) *AppError {
 		DeveloperMessage: developerMessage,
 		Code:             code,
 	}
+}
+
+func systemError(developerMessage string) *AppError {
+	return NewAppError("system error", "NS-000001", developerMessage)
+}
+
+func BadRequestError(message string) *AppError {
+	return NewAppError(message, "NS-000002", "some thing wrong with user data")
+}
+
+func APIError(code, message, developerMessage string) *AppError {
+	return NewAppError(message, code, developerMessage)
+}
+
+func UnauthorizedError(message string) *AppError {
+	return NewAppError(message, "NS-000003", "")
 }

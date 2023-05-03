@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/jackc/pgconn"
 	"go.mod/internal/user"
@@ -30,10 +29,9 @@ func NewRepository(client postgresql.Client, logger *logging.Logger) user.Storag
 func (r *repository) Create(ctx context.Context, user user.User) error {
 	q := `INSERT INTO public.user (username, email, password_hash) VALUES ($1, $2, $3) `
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(q)))
+
 	if err := r.client.QueryRow(ctx, q, user.Username, user.Email, user.PasswordHash).Scan(&user.ID); err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			pgErr = err.(*pgconn.PgError)
+		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
 			r.logger.Error(newErr)
 			return newErr

@@ -34,7 +34,8 @@ func main() {
 	repository := db.NewRepository(postgresClient, logger)
 
 	logger.Info("Register User handler")
-	userHandler := user.NewUserHandler(*logger, repository)
+	userService := user.NewService(repository, logger)
+	userHandler := user.NewUserHandler(*logger, *userService)
 	userHandler.Register(router)
 
 	start(router, cfg, logger)
