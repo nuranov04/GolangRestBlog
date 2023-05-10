@@ -1,0 +1,263 @@
+info:
+  title: "BLOG"
+  version: "1.0.0.0"
+
+definitions:
+  user:
+    type: object
+    required:
+      - username, email, password
+    properties:
+      id:
+        type: integer
+        readOnly: true
+        uniqueItems: true
+      username:
+        type: string
+        minLength: 8
+        uniqueItems: true
+      email:
+        type: string
+        uniqueItems: true
+        format: string@example.com
+      password:
+        type: string
+        minLength: 8
+
+  post:
+    type: object
+    required:
+      - title, description, OwnerId
+    properties:
+      id:
+        type: integer
+        readOnly: true
+        uniqueItems: true
+      title:
+        type: string
+      description:
+        type: string
+      ownerId:
+        type: integer
+      owner:
+        type: object
+        $ref: "#/definitions/user"
+
+  error:
+    type: object
+    required:
+      - message
+    properties:
+      code:
+        type: integer
+        format: int64
+      message:
+        type: string
+  internalError:
+    description: Internal Server Error
+
+paths:
+  /users/id/:
+    parameters:
+      - name: id
+        in: query
+        required: true
+        type: integer
+    delete:
+      tags:
+        - users
+      description: Delete user by id.
+      operationId: GetUserById
+      responses:
+        200:
+          description: Deleted
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server
+          schema:
+            $ref: "#/definitions/internalError"
+    get:
+      tags:
+        - users
+      description: Get User By Id
+      operationId: GetUserById
+      responses:
+        "200":
+          description: User object
+          schema:
+            type: object
+            $ref: "#/definitions/user"
+        "400":
+          description: Bad Request
+        500:
+          description: Internal Server
+          schema:
+            $ref: "#/definitions/internalError"
+    patch:
+      description: Partially User Update
+      operationId: PartiallyUpdateUser
+      responses:
+        "200":
+          description: "User Updated"
+          schema:
+            type: object
+            $ref: "#/definitions/user"
+        400:
+          description: "Bad request"
+          schema:
+            type: object
+            $ref: '#/definitions/error'
+        500:
+          description: Internal Server
+          schema:
+            $ref: "#/definitions/internalError"
+      tags:
+        - users
+  /users/username/:
+    get:
+      parameters:
+        - name: username
+          in: query
+          required: true
+          type: string
+      description: Get User By username
+      operationId: GetUserByEmail
+      responses:
+        "200":
+          description: "Ok"
+          schema:
+            type: object
+            $ref: '#/definitions/user'
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+            $ref: '#/definitions/error'
+        500:
+          description: Internal Server
+          schema:
+            $ref: "#/definitions/internalError"
+      tags:
+        - users
+  /users/email/:
+    get:
+      parameters:
+        - name: email
+          in: query
+          type: string
+          required: true
+      description: Get User By Email
+      operationId: GetUserByEmail
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: object
+            $ref: "#/definitions/user"
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+            $ref: "#/definitions/error"
+        500:
+          description: Internal Server
+          schema:
+            $ref: "#/definitions/internalError"
+      tags:
+        - users
+  /users/:
+    get:
+      description: Get list of users
+      operationId: listUsers
+      responses:
+        200:
+          description: Ok
+          schema:
+            type: object
+            $ref: "#/definitions/user"
+        400:
+          description: Bad Request
+          schema:
+            type: object
+            $ref: "#/definitions/error"
+        500:
+          description: Internal Server
+          schema:
+            $ref: "#/definitions/internalError"
+      tags:
+        - users
+
+    post:
+      description: Create User
+      operationId: CreateUser
+      parameters:
+        - name: user object
+          in: body
+          schema:
+            $ref: "#/definitions/user"
+      responses:
+        "201":
+          description: "Created"
+          schema:
+            $ref: "#/definitions/user"
+        "400":
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/error"
+        500:
+          description: Internal Server
+          schema:
+            $ref: "#/definitions/internalError"
+      tags:
+        - users
+    put:
+      description: Update User
+      operationId: listUsers
+      responses:
+        "200":
+          $ref: '#/responses/userResponse'
+        "400":
+          $ref: '#/responses/BadRequest'
+        500:
+          description: Internal Server
+          schema:
+            $ref: "#/definitions/internalError"
+      tags:
+        - users
+  /posts/:
+    get:
+      tags:
+        - posts
+      description: Get list of posts
+      operationId: listUsers
+      responses:
+        "200":
+          description: "Get List of Post"
+          schema:
+            type: array
+            description: "Post List"
+            $ref: "#/definitions/post"
+        400:
+          description: "Bad Request"
+        500:
+          description: Internal Server
+          schema:
+            $ref: "#/definitions/internalError"
+    post:
+      parameters:
+        - name: postObject
+          in: body
+          schema:
+            $ref: "#/definitions/post"
+
+      responses:
+        200:
+          description: Create
+        400:
+          description: Bad Request
+        500:
+          $ref: "#/definitions/internalError"
+      tags:
+        - posts
+swagger: "2.0"

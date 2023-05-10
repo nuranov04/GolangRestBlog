@@ -19,6 +19,7 @@ import (
 )
 
 func main() {
+
 	logger := logging.GetLogger()
 	logger.Info("Server is starting")
 

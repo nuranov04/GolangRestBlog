@@ -10,6 +10,6 @@ type Storage interface {
 	FindOneById(ctx context.Context, id int) (User, error)
 	FindOneByEmail(ctx context.Context, email string) (User, error)
 	FindOneByUsername(ctx context.Context, username string) (User, error)
-	Update(ctx context.Context, user User) error
-	Delete(ctx context.Context, id string) error
+	Update(ctx context.Context, user User, userUpdate UpdateUserDTO) (UpdateUserDTO, error)
+	Delete(ctx context.Context, id int) error
 }
