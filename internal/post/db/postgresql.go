@@ -24,10 +24,10 @@ func NewRepository(client postgresql.Client, logger *logging.Logger) post.Storag
 
 func (r *repository) Create(ctx context.Context, postObj post.CreatePostDTO) (p *post.CreatePostDTO, err error) {
 	q := `
-	INSERT INTO (title, description, owner_id) VALUES ($1, $2, $3) RETURNING id, title, description, owner_id
+	INSERT INTO public.post (title, description, owner_id) VALUES ($1, $2, $3) RETURNING id, title, description, owner_id
 	`
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
-	if err := r.client.QueryRow(ctx, q, postObj.Title, postObj.Description, postObj.OwnerId).Scan(&postObj.Id, postObj.Title, postObj.Description, postObj.OwnerId); err != nil {
+	if err := r.client.QueryRow(ctx, q, postObj.Title, postObj.Description, postObj.OwnerId).Scan(&postObj.Id, &postObj.Title, &postObj.Description, &postObj.OwnerId); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
 			r.logger.Error(newErr)
@@ -35,22 +35,24 @@ func (r *repository) Create(ctx context.Context, postObj post.CreatePostDTO) (p 
 		}
 		return nil, err
 	}
+	r.logger.Debug(postObj)
 	return &postObj, nil
 }
 
 func (r *repository) FindOne(ctx context.Context, id int) (u *post.Post, err error) {
 	q := `SELECT id, title, description, owner_id FROM public.post WHERE id = $1`
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
-	var userObj post.Post
-	if err := r.client.QueryRow(ctx, q, id).Scan(&userObj.ID, userObj.Title, userObj.Description, userObj.OwnerId); err != nil {
+	var postObj post.Post
+	if err := r.client.QueryRow(ctx, q, id).Scan(&postObj.ID, &postObj.Title, &postObj.Description, &postObj.OwnerId); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
 			r.logger.Error(newErr)
-			return &userObj, newErr
+			return &postObj, newErr
 		}
-		return &userObj, err
+		r.logger.Debug(err)
+		return &postObj, err
 	}
-	return &userObj, err
+	return &postObj, err
 }
 
 func (r *repository) FindAll(ctx context.Context) (u []post.Post, err error) {
@@ -60,10 +62,9 @@ func (r *repository) FindAll(ctx context.Context) (u []post.Post, err error) {
 	if err != nil {
 		return nil, err
 	}
-	defer query.Close()
 
 	posts := make([]post.Post, 0)
-
+	r.logger.Debug(query)
 	for query.Next() {
 		var postInfo post.Post
 		err := query.Scan(&postInfo.ID, &postInfo.Title, &postInfo.Description, &postInfo.OwnerId)
@@ -128,5 +129,16 @@ func (r *repository) Update(ctx context.Context, postObj *post.Post, postUpdate 
 }
 
 func (r *repository) Delete(ctx context.Context, id int) error {
-	panic("das")
+	q := `
+	DELETE FROM public.post WHERE id=$1
+	`
+	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
+	if err := r.client.QueryRow(ctx, q, id).Scan(&id); err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
+			return newErr
+		}
+		return err
+	}
+	return nil
 }

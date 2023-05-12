@@ -1,0 +1,29 @@
+### Get posts
+GET http://0.0.0.0:8000/posts
+Accept: application/json
+
+### Get post
+GET http://0.0.0.0:8000/posts/:id?id=1
+Accept: application/json
+
+### Create post
+POST http://0.0.0.0:8000/posts/
+Content-Type: application/json
+
+{
+  "title" : "create10",
+  "description": "create10",
+  "owner_id": 1
+}
+
+### Update post
+PUT http://0.0.0.0:8000/posts/:id?id=1
+Content-Type: application/json
+
+{
+  "title": "10",
+  "description": "10"
+}
+
+### Delete post
+DELETE http://0.0.0.0:8000/posts/:id?id=1
