@@ -45,7 +45,7 @@ func main() {
 	postRepository := db2.NewRepository(postgresClient, logger)
 	postService := post.NewService(postRepository, logger)
 	postHandler := post.NewPostHandler(*logger, postService)
-
+	postHandler.Register(router)
 	start(router, cfg, logger)
 	fmt.Println("Server is started")
 }

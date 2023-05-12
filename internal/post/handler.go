@@ -18,10 +18,10 @@ const (
 
 type handler struct {
 	logger  logging.Logger
-	service service
+	service *service
 }
 
-func NewPostHandler(logger logging.Logger, s service) handlers.Handler {
+func NewPostHandler(logger logging.Logger, s *service) handlers.Handler {
 	return &handler{
 		logger:  logger,
 		service: s,
