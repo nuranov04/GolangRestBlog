@@ -37,7 +37,6 @@ func (h handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, userUrlUsername, apperror.Middleware(h.GetUserByUsername))
 	router.HandlerFunc(http.MethodPost, usersUrl, apperror.Middleware(h.CreateUser))
 	router.HandlerFunc(http.MethodPut, userUrlId, apperror.Middleware(h.UpdateUser))
-	router.HandlerFunc(http.MethodPatch, userUrlId, apperror.Middleware(h.PartiallyUpdateUser))
 	router.HandlerFunc(http.MethodDelete, userUrlId, apperror.Middleware(h.DeleteUser))
 }
 

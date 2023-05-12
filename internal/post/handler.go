@@ -33,7 +33,6 @@ func (h handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, postUrl, apperror.Middleware(h.GetPost))
 	router.HandlerFunc(http.MethodPost, postsUrl, apperror.Middleware(h.CreatePost))
 	router.HandlerFunc(http.MethodPut, postUrl, apperror.Middleware(h.UpdatePost))
-	router.HandlerFunc(http.MethodPatch, postUrl, apperror.Middleware(h.PartiallyUpdatePost))
 	router.HandlerFunc(http.MethodDelete, postUrl, apperror.Middleware(h.DeletePost))
 }
 
