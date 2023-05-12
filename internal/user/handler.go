@@ -37,7 +37,7 @@ func (h handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, userUrlUsername, apperror.Middleware(h.GetUserByUsername))
 	router.HandlerFunc(http.MethodPost, usersUrl, apperror.Middleware(h.CreateUser))
 	router.HandlerFunc(http.MethodPut, userUrlId, apperror.Middleware(h.UpdateUser))
-	router.PATCH(userUrlId, h.PartiallyUpdateUser)
+	router.HandlerFunc(http.MethodPatch, userUrlId, apperror.Middleware(h.PartiallyUpdateUser))
 	router.HandlerFunc(http.MethodDelete, userUrlId, apperror.Middleware(h.DeleteUser))
 }
 
@@ -73,7 +73,7 @@ func (h handler) UpdateUser(w http.ResponseWriter, request *http.Request) error 
 	userId := request.URL.Query().Get("id")
 	UserIdInt, err := strconv.Atoi(userId)
 	if err != nil {
-		return apperror.UserIdQueryParamError
+		return apperror.IdQueryParamError
 	}
 	userObj, err := h.service.FindOneById(context.TODO(), UserIdInt)
 	if err != nil {
@@ -101,7 +101,7 @@ func (h handler) GetUserById(w http.ResponseWriter, request *http.Request) error
 	userId := request.URL.Query().Get("id")
 	userIdInt, err := strconv.Atoi(userId)
 	if err != nil {
-		return apperror.UserIdQueryParamError
+		return apperror.IdQueryParamError
 	}
 	userObj, err := h.service.FindOneById(context.TODO(), userIdInt)
 	if err != nil {
@@ -147,10 +147,10 @@ func (h handler) GetUserByEmail(w http.ResponseWriter, request *http.Request) er
 	return nil
 }
 
-func (h handler) PartiallyUpdateUser(w http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (h handler) PartiallyUpdateUser(w http.ResponseWriter, request *http.Request) error {
 	w.WriteHeader(200)
 	w.Write([]byte("User Partially Update"))
-
+	return nil
 }
 
 func (h handler) DeleteUser(w http.ResponseWriter, request *http.Request) error {

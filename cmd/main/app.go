@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"go.mod/internal/config"
+	"go.mod/internal/post"
+	db2 "go.mod/internal/post/db"
 	"go.mod/internal/user"
 	"go.mod/internal/user/db"
 	"go.mod/pkg/client/postgresql"
@@ -32,12 +34,17 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	repository := db.NewRepository(postgresClient, logger)
+	userRepository := db.NewRepository(postgresClient, logger)
 
 	logger.Info("Register User handler")
-	userService := user.NewService(repository, logger)
+	userService := user.NewService(userRepository, logger)
 	userHandler := user.NewUserHandler(*logger, *userService)
 	userHandler.Register(router)
+
+	logger.Info("Register Post handler")
+	postRepository := db2.NewRepository(postgresClient, logger)
+	postService := post.NewService(postRepository, logger)
+	postHandler := post.NewPostHandler(*logger, postService)
 
 	start(router, cfg, logger)
 	fmt.Println("Server is started")
