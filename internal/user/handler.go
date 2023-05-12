@@ -147,12 +147,6 @@ func (h handler) GetUserByEmail(w http.ResponseWriter, request *http.Request) er
 	return nil
 }
 
-func (h handler) PartiallyUpdateUser(w http.ResponseWriter, request *http.Request) error {
-	w.WriteHeader(200)
-	w.Write([]byte("User Partially Update"))
-	return nil
-}
-
 func (h handler) DeleteUser(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	userId := request.URL.Query().Get("id")

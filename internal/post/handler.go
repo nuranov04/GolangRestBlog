@@ -117,10 +117,6 @@ func (h handler) UpdatePost(w http.ResponseWriter, request *http.Request) error 
 	return nil
 }
 
-func (h handler) PartiallyUpdatePost(w http.ResponseWriter, request *http.Request) error {
-	return nil
-}
-
 func (h handler) DeletePost(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	postId := request.URL.Query().Get("id")
