@@ -24,15 +24,6 @@ Sed augue ex, viverra a pretium malesuada, elementum vitae aenean. `)
 
 var repo = NewCacheRepo(104857600) // 100MB
 
-// Test scenario:
-// 1. Set some data
-// 2. Check entry count == 1
-// 3. Get data
-// 4. Check hit count == 1
-// 5. Get data with invalid key
-// 6. Check miss count == 1
-// 7. Delete data using valid key
-// 8. Delete data using invalid key (must fail)
 func TestRepository(t *testing.T) {
 	err := repo.Set(uuid, data, -1)
 	assert.NoError(t, err, "failed to set data in cache")
