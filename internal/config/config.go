@@ -7,12 +7,6 @@ import (
 )
 
 type Config struct {
-	isDebug *bool `yaml:"is_debug env-required:true"`
-	Listen  struct {
-		Type   string `yaml:"type" env-default:"port"`
-		BindIp string `yaml:"bind_ip" env-default:"0.0.0.0"`
-		Port   string `yaml:"port" env-default:"8000"`
-	} `yaml:"listen"`
 	Storage struct {
 		Host     string `json:"host"`
 		Port     string `json:"port"`
@@ -23,6 +17,12 @@ type Config struct {
 	JWT struct {
 		Secret string `yaml:"secret" env-required:"true"`
 	}
+	isDebug *bool `yaml:"is_debug env-required:true"`
+	Listen  struct {
+		Type   string `yaml:"type" env-default:"port"`
+		BindIp string `yaml:"bind_ip" env-default:"0.0.0.0"`
+		Port   string `yaml:"port" env-default:"8000"`
+	} `yaml:"listen"`
 }
 
 var instance *Config

@@ -1,11 +1,14 @@
-package user
+package handlers
 
 import (
 	"context"
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
+	"go.mod/internal"
 	"go.mod/internal/apperror"
-	"go.mod/internal/handlers"
+	"go.mod/internal/model"
+	"go.mod/internal/service"
+	"go.mod/pkg/jwt"
 	"go.mod/pkg/logging"
 	"net/http"
 	"strconv"
@@ -19,19 +22,20 @@ const (
 	loginUrl        = "/login/"
 )
 
-type handler struct {
-	logger  logging.Logger
-	service service
+type userHandler struct {
+	logger    logging.Logger
+	service   service.UserService
+	JWTHelper jwt.Helper
 }
 
-func NewUserHandler(logger logging.Logger, service service) handlers.Handler {
-	return &handler{
+func NewUserHandler(logger logging.Logger, service service.UserService) internal.Handler {
+	return &userHandler{
 		logger:  logger,
 		service: service,
 	}
 }
 
-func (h handler) Register(router *httprouter.Router) {
+func (h userHandler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, usersUrl, apperror.Middleware(h.GetList))
 	router.HandlerFunc(http.MethodGet, userUrlId, apperror.Middleware(h.GetUserById))
 	router.HandlerFunc(http.MethodGet, userUrlEmail, apperror.Middleware(h.GetUserByEmail))
@@ -40,9 +44,10 @@ func (h handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPut, userUrlId, apperror.Middleware(h.UpdateUser))
 	router.HandlerFunc(http.MethodDelete, userUrlId, apperror.Middleware(h.DeleteUser))
 	router.HandlerFunc(http.MethodPost, loginUrl, apperror.Middleware(h.Login))
+	router.HandlerFunc(http.MethodPut, loginUrl, apperror.Middleware(h.Login))
 }
 
-func (h handler) GetList(w http.ResponseWriter, request *http.Request) error {
+func (h userHandler) GetList(w http.ResponseWriter, request *http.Request) error {
 	userList, err := h.service.FindAll(context.TODO())
 	userListBytes, err := json.Marshal(userList)
 	if err != nil {
@@ -54,9 +59,47 @@ func (h handler) GetList(w http.ResponseWriter, request *http.Request) error {
 	return nil
 }
 
-func (h handler) CreateUser(w http.ResponseWriter, request *http.Request) error {
+func (h userHandler) Login(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
-	var CreateUser CreateUserDTO
+	var (
+		token []byte
+		err   error
+	)
+	switch request.Method {
+	case http.MethodPost:
+		defer request.Body.Close()
+		var SignInDTO model.LoginDTO
+		if err := json.NewDecoder(request.Body).Decode(&SignInDTO); err != nil {
+			return apperror.BadRequestError("failed to decode data")
+		}
+		u, err := h.service.FindUserByUsernameAndPassword(context.TODO(), SignInDTO)
+		if err != nil {
+			return err
+		}
+		token, err = h.JWTHelper.GenerateAccessToken(u)
+		if err != nil {
+			return err
+		}
+	case http.MethodPut:
+		defer request.Body.Close()
+		var rt jwt.RT
+		if err := json.NewDecoder(request.Body).Decode(&rt); err != nil {
+			return apperror.BadRequestError("failed to decode data")
+		}
+		token, err = h.JWTHelper.UpdateRefreshToken(rt)
+		if err != nil {
+			return err
+		}
+
+	}
+	w.WriteHeader(http.StatusCreated)
+	w.Write(token)
+	return nil
+}
+
+func (h userHandler) CreateUser(w http.ResponseWriter, request *http.Request) error {
+	w.Header().Set("Content-Type", "application/json")
+	var CreateUser model.CreateUserDTO
 	if err := json.NewDecoder(request.Body).Decode(&CreateUser); err != nil {
 		return apperror.BadRequestError("can't decode")
 	}
@@ -77,17 +120,7 @@ func (h handler) CreateUser(w http.ResponseWriter, request *http.Request) error 
 	return nil
 }
 
-func (h handler) Login(w http.ResponseWriter, request *http.Request) error {
-	w.Header().Set("Content-Type", "application/json")
-
-	var userLoginDTO LoginDTO
-	if err := json.NewDecoder(request.Body).Decode(&userLoginDTO); err != nil {
-		return apperror.BadRequestError("can't decode")
-	}
-	return nil
-}
-
-func (h handler) UpdateUser(w http.ResponseWriter, request *http.Request) error {
+func (h userHandler) UpdateUser(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	userId := request.URL.Query().Get("id")
 	UserIdInt, err := strconv.Atoi(userId)
@@ -98,11 +131,11 @@ func (h handler) UpdateUser(w http.ResponseWriter, request *http.Request) error 
 	if err != nil {
 		return apperror.ErrorNotFound
 	}
-	var updateUser UpdateUserDTO
+	var updateUser model.UpdateUserDTO
 	if err := json.NewDecoder(request.Body).Decode(&updateUser); err != nil {
 		return apperror.BadRequestError("can't decode")
 	}
-	updatedUserObj, err := h.service.userUpdate(context.TODO(), *userObj, updateUser)
+	updatedUserObj, err := h.service.UserUpdate(context.TODO(), *userObj, updateUser)
 	if err != nil {
 		return err
 	}
@@ -116,7 +149,7 @@ func (h handler) UpdateUser(w http.ResponseWriter, request *http.Request) error 
 	return nil
 }
 
-func (h handler) GetUserById(w http.ResponseWriter, request *http.Request) error {
+func (h userHandler) GetUserById(w http.ResponseWriter, request *http.Request) error {
 	userId := request.URL.Query().Get("id")
 	userIdInt, err := strconv.Atoi(userId)
 	if err != nil {
@@ -136,7 +169,7 @@ func (h handler) GetUserById(w http.ResponseWriter, request *http.Request) error
 	return nil
 }
 
-func (h handler) GetUserByUsername(w http.ResponseWriter, request *http.Request) error {
+func (h userHandler) GetUserByUsername(w http.ResponseWriter, request *http.Request) error {
 	username := request.URL.Query().Get("username")
 	userObj, err := h.service.FindOneByUsername(context.TODO(), username)
 	if err != nil {
@@ -152,7 +185,7 @@ func (h handler) GetUserByUsername(w http.ResponseWriter, request *http.Request)
 	return nil
 }
 
-func (h handler) GetUserByEmail(w http.ResponseWriter, request *http.Request) error {
+func (h userHandler) GetUserByEmail(w http.ResponseWriter, request *http.Request) error {
 	email := request.URL.Query().Get("email")
 	userObj, err := h.service.FindOneByEmail(context.TODO(), email)
 	if err != nil {
@@ -169,7 +202,7 @@ func (h handler) GetUserByEmail(w http.ResponseWriter, request *http.Request) er
 	return nil
 }
 
-func (h handler) DeleteUser(w http.ResponseWriter, request *http.Request) error {
+func (h userHandler) DeleteUser(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	userId := request.URL.Query().Get("id")
 	userIdInt, err := strconv.Atoi(userId)

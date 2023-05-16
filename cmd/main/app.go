@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"go.mod/internal/config"
-	"go.mod/internal/post"
-	db2 "go.mod/internal/post/db"
-	"go.mod/internal/user"
-	"go.mod/internal/user/db"
+	"go.mod/internal/db"
+	"go.mod/internal/handlers"
+	"go.mod/internal/service"
 	"go.mod/pkg/client/postgresql"
 	"go.mod/pkg/logging"
 	"log"
@@ -29,21 +28,21 @@ func main() {
 	cfg := config.GetConfig()
 	logger.Info("read application configs")
 
-	postgresClient, err := postgresql.NewClient(context.Background(), 3, cfg.Storage)
+	postgresClient, err := postgresql.NewClient(context.Background(), 3, cfg)
 	if err != nil {
 		logger.Fatal(err)
 	}
-	userRepository := db.NewRepository(postgresClient, logger)
+	userRepository := db.NewUserRepository(postgresClient, logger)
 
-	logger.Info("Register User handler")
-	userService := user.NewService(userRepository, logger)
-	userHandler := user.NewUserHandler(*logger, *userService)
+	logger.Info("Register User handlers")
+	userService := service.NewUserService(userRepository, logger)
+	userHandler := handlers.NewUserHandler(*logger, userService)
 	userHandler.Register(router)
 
-	logger.Info("Register Post handler")
-	postRepository := db2.NewRepository(postgresClient, logger)
-	postService := post.NewService(postRepository, logger)
-	postHandler := post.NewPostHandler(*logger, postService)
+	logger.Info("Register Post handlers")
+	postRepository := db.NewPostRepository(postgresClient, logger)
+	postService := service.NewPostService(postRepository, logger)
+	postHandler := handlers.NewPostHandler(*logger, postService)
 	postHandler.Register(router)
 	start(router, cfg, logger)
 	fmt.Println("Server is started")

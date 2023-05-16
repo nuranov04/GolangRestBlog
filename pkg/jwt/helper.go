@@ -5,7 +5,7 @@ import (
 	"github.com/cristalhq/jwt/v3"
 	"github.com/google/uuid"
 	"go.mod/internal/config"
-	"go.mod/internal/user"
+	"go.mod/internal/model"
 	"go.mod/pkg/cache"
 	"go.mod/pkg/logging"
 	"time"
@@ -32,7 +32,7 @@ func NewHelper(RTCache cache.Repository, logger logging.Logger) Helper {
 }
 
 type Helper interface {
-	GenerateAccessToken(u user.User) ([]byte, error)
+	GenerateAccessToken(u model.User) ([]byte, error)
 	UpdateRefreshToken(rt RT) ([]byte, error)
 }
 
@@ -43,7 +43,7 @@ func (h *helper) UpdateRefreshToken(rt RT) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	var u user.User
+	var u model.User
 	err = json.Unmarshal(userBytes, &u)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (h *helper) UpdateRefreshToken(rt RT) ([]byte, error) {
 	return h.GenerateAccessToken(u)
 }
 
-func (h *helper) GenerateAccessToken(u user.User) ([]byte, error) {
+func (h *helper) GenerateAccessToken(u model.User) ([]byte, error) {
 	key := []byte(config.GetConfig().JWT.Secret)
 	signer, err := jwt.NewSignerHS(jwt.HS256, key)
 	if err != nil {

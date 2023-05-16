@@ -4,16 +4,16 @@ Accept: application/json
 
 
 ### Get User by id
-GET http://0.0.0.0:8000/users/id/?id=4
+GET http://0.0.0.0:8000/users/id/?id=73
 Accept: application/json
 
 
 ### Get User by username
-GET http://0.0.0.0:8000/users/username/?username=artur
+GET http://0.0.0.0:8000/users/username/?username=artur23
 Accept: application/json
 
 ### Get User by email
-GET http://0.0.0.0:8000/users/email/?email=artur@gmail.com
+GET http://0.0.0.0:8000/users/email/?email=password
 Accept: application/json
 
 
@@ -22,15 +22,15 @@ POST http://0.0.0.0:8000/users/
 Accept: application/json
 
 {
-"username": "artur",
-"email":"nuranov",
+"username": "artur_1",
+"email":"nuranov_1",
 "password":"password",
 "repeat_password":"password"
 }
 
 
 ### Update User
-PUT http://0.0.0.0:8000/users/id/?id=37
+PUT http://0.0.0.0:8000/users/id/?id=73
 Accept: application/json
 
 {

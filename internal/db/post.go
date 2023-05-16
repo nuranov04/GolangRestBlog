@@ -4,32 +4,33 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgconn"
-	apperror "go.mod/internal/apperror"
-	"go.mod/internal/post"
+	"go.mod/internal/apperror"
+	"go.mod/internal/model"
+	"go.mod/internal/storage"
 	"go.mod/pkg/client/postgresql"
 	"go.mod/pkg/logging"
 	"go.mod/pkg/utils"
 )
 
-type repository struct {
+type postRepository struct {
 	client postgresql.Client
 	logger *logging.Logger
 }
 
-func NewRepository(client postgresql.Client, logger *logging.Logger) post.Storage {
-	return &repository{
+func NewPostRepository(client postgresql.Client, logger *logging.Logger) storage.PostStorage {
+	return &postRepository{
 		client: client,
 		logger: logger,
 	}
 }
 
-func (r *repository) Create(ctx context.Context, postObj post.CreatePostDTO) (p *post.Post, err error) {
+func (r *postRepository) Create(ctx context.Context, postObj model.CreatePostDTO) (u *model.Post, err error) {
 	q := `
 	INSERT INTO public.post (title, description, owner_id) VALUES ($1, $2, $3) RETURNING id, title, description, owner_id
 	`
 
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
-	var postDTO post.Post
+	var postDTO model.Post
 	if err := r.client.QueryRow(ctx, q, postObj.Title, postObj.Description, postObj.OwnerId).Scan(&postDTO.ID, &postDTO.Title, &postDTO.Description, &postDTO.OwnerId); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
@@ -43,7 +44,7 @@ func (r *repository) Create(ctx context.Context, postObj post.CreatePostDTO) (p 
 	return &postDTO, nil
 }
 
-func (r *repository) Update(ctx context.Context, postObj *post.Post, postUpdate post.UpdatePostDTO) (u *post.Post, err error) {
+func (r *postRepository) Update(ctx context.Context, postObj *model.Post, postUpdate model.UpdatePostDTO) (u *model.Post, err error) {
 	q := `
 		UPDATE public.post 
 		SET title = $1, description = $2 
@@ -72,10 +73,10 @@ func (r *repository) Update(ctx context.Context, postObj *post.Post, postUpdate 
 	return postObj, nil
 }
 
-func (r *repository) FindOne(ctx context.Context, id int) (u *post.Post, err error) {
+func (r *postRepository) FindOne(ctx context.Context, id int) (u *model.Post, err error) {
 	q := `SELECT id, title, description, owner_id FROM public.post WHERE id = $1`
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
-	var postObj post.Post
+	var postObj model.Post
 	if err := r.client.QueryRow(ctx, q, id).Scan(&postObj.ID, &postObj.Title, &postObj.Description, &postObj.OwnerId); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
@@ -87,7 +88,7 @@ func (r *repository) FindOne(ctx context.Context, id int) (u *post.Post, err err
 	return &postObj, nil
 }
 
-func (r *repository) FindAll(ctx context.Context) (u []post.Post, err error) {
+func (r *postRepository) FindAll(ctx context.Context) (u []model.Post, err error) {
 	q := `SELECT id, title, description, owner_id FROM public.post`
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
 	query, err := r.client.Query(ctx, q)
@@ -95,10 +96,10 @@ func (r *repository) FindAll(ctx context.Context) (u []post.Post, err error) {
 		return nil, err
 	}
 
-	posts := make([]post.Post, 0)
+	posts := make([]model.Post, 0)
 	r.logger.Debug(query)
 	for query.Next() {
-		var postInfo post.Post
+		var postInfo model.Post
 		err := query.Scan(&postInfo.ID, &postInfo.Title, &postInfo.Description, &postInfo.OwnerId)
 		if err != nil {
 			return nil, err
@@ -109,7 +110,7 @@ func (r *repository) FindAll(ctx context.Context) (u []post.Post, err error) {
 	return posts, nil
 }
 
-func (r *repository) FindUserAllPosts(ctx context.Context, userId int) ([]post.Post, error) {
+func (r *postRepository) FindUserAllPosts(ctx context.Context, userId int) ([]model.Post, error) {
 	q := `
 			SELECT id, title, description, owner_id FROM public.post WHERE owner_id = $1
 	`
@@ -120,9 +121,9 @@ func (r *repository) FindUserAllPosts(ctx context.Context, userId int) ([]post.P
 	}
 	defer query.Close()
 
-	posts := make([]post.Post, 0)
+	posts := make([]model.Post, 0)
 	for query.Next() {
-		var postInfo post.Post
+		var postInfo model.Post
 		err := query.Scan(&postInfo.ID, &postInfo.Title, &postInfo.Description, &postInfo.OwnerId)
 		if err != nil {
 			return nil, err
@@ -133,7 +134,7 @@ func (r *repository) FindUserAllPosts(ctx context.Context, userId int) ([]post.P
 	return posts, nil
 }
 
-func (r *repository) Delete(ctx context.Context, id int) error {
+func (r *postRepository) Delete(ctx context.Context, id int) error {
 	q := `
 	DELETE FROM public.post WHERE id=$1
 	`

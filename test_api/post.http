@@ -14,11 +14,11 @@ Content-Type: application/json
 {
   "title" : "create101111",
   "description": "create101111",
-  "owner_id": 1
+  "owner_id": 74
 }
 
 ### Update post
-PUT http://0.0.0.0:8000/posts/:id?id=14
+PUT http://0.0.0.0:8000/posts/:id?id=30
 Content-Type: application/json
 
 {

@@ -1,11 +1,13 @@
-package post
+package handlers
 
 import (
 	"context"
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
+	"go.mod/internal"
 	"go.mod/internal/apperror"
-	"go.mod/internal/handlers"
+	"go.mod/internal/model"
+	"go.mod/internal/service"
 	"go.mod/pkg/logging"
 	"net/http"
 	"strconv"
@@ -16,19 +18,19 @@ const (
 	postUrl  = "/posts/:id"
 )
 
-type handler struct {
+type postHandler struct {
 	logger  logging.Logger
-	service *service
+	service service.PostService
 }
 
-func NewPostHandler(logger logging.Logger, s *service) handlers.Handler {
-	return &handler{
+func NewPostHandler(logger logging.Logger, s service.PostService) internal.Handler {
+	return &postHandler{
 		logger:  logger,
 		service: s,
 	}
 }
 
-func (h handler) Register(router *httprouter.Router) {
+func (h postHandler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, postsUrl, apperror.Middleware(h.GetList))
 	router.HandlerFunc(http.MethodGet, postUrl, apperror.Middleware(h.GetPost))
 	router.HandlerFunc(http.MethodPost, postsUrl, apperror.Middleware(h.CreatePost))
@@ -36,7 +38,7 @@ func (h handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodDelete, postUrl, apperror.Middleware(h.DeletePost))
 }
 
-func (h handler) GetList(w http.ResponseWriter, request *http.Request) error {
+func (h postHandler) GetList(w http.ResponseWriter, request *http.Request) error {
 	posts, err := h.service.FindAll(context.TODO())
 	if err != nil {
 		return err
@@ -51,7 +53,7 @@ func (h handler) GetList(w http.ResponseWriter, request *http.Request) error {
 	return nil
 }
 
-func (h handler) GetPost(w http.ResponseWriter, request *http.Request) error {
+func (h postHandler) GetPost(w http.ResponseWriter, request *http.Request) error {
 	id := request.URL.Query().Get("id")
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
@@ -70,9 +72,9 @@ func (h handler) GetPost(w http.ResponseWriter, request *http.Request) error {
 	return nil
 }
 
-func (h handler) CreatePost(w http.ResponseWriter, request *http.Request) error {
+func (h postHandler) CreatePost(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
-	var CreatePostDTO CreatePostDTO
+	var CreatePostDTO model.CreatePostDTO
 	if err := json.NewDecoder(request.Body).Decode(&CreatePostDTO); err != nil {
 		return apperror.BadRequestError("can't decode")
 	}
@@ -89,7 +91,7 @@ func (h handler) CreatePost(w http.ResponseWriter, request *http.Request) error 
 	return nil
 }
 
-func (h handler) UpdatePost(w http.ResponseWriter, request *http.Request) error {
+func (h postHandler) UpdatePost(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	postId := request.URL.Query().Get("id")
 	postIdInt, err := strconv.Atoi(postId)
@@ -100,7 +102,7 @@ func (h handler) UpdatePost(w http.ResponseWriter, request *http.Request) error 
 	if err != nil {
 		return apperror.ErrorNotFound
 	}
-	var updatePost UpdatePostDTO
+	var updatePost model.UpdatePostDTO
 	if err := json.NewDecoder(request.Body).Decode(&updatePost); err != nil {
 		h.logger.Debug(err)
 		return apperror.BadRequestError("can't decode")
@@ -119,7 +121,7 @@ func (h handler) UpdatePost(w http.ResponseWriter, request *http.Request) error 
 	return nil
 }
 
-func (h handler) DeletePost(w http.ResponseWriter, request *http.Request) error {
+func (h postHandler) DeletePost(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	postId := request.URL.Query().Get("id")
 	postIdInt, err := strconv.Atoi(postId)
