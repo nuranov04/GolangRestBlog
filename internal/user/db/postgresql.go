@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgconn"
+	"go.mod/internal/apperror"
 	"go.mod/internal/user"
 	"go.mod/pkg/client/postgresql"
 	"go.mod/pkg/logging"
@@ -22,22 +23,24 @@ func NewRepository(client postgresql.Client, logger *logging.Logger) user.Storag
 	}
 }
 
-func (r *repository) Create(ctx context.Context, user user.User) error {
-	q := `INSERT INTO public.user (username, email, password_hash) VALUES ($1, $2, $3) RETURNING username, email`
+func (r *repository) Create(ctx context.Context, userDTO user.User) (u *user.User, err error) {
+	q := `INSERT INTO public.user (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email`
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
-	if err := r.client.QueryRow(ctx, q, user.Username, user.Email, user.PasswordHash).Scan(&user.Username, &user.Email); err != nil {
+	if err := r.client.QueryRow(ctx, q, userDTO.Username, userDTO.Email, userDTO.Password).Scan(&userDTO.ID, &userDTO.Username, &userDTO.Email); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
-			r.logger.Error(newErr)
-			return newErr
+			if pgErr.Code == "23505" {
+				return nil, apperror.UserAlreadyExist
+			}
+			return nil, newErr
 		}
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &userDTO, nil
 }
 
-func (r *repository) Update(ctx context.Context, userObj user.User, userUpdate user.UpdateUserDTO) (user.UpdateUserDTO, error) {
+func (r *repository) Update(ctx context.Context, userObj user.User, userUpdate user.UpdateUserDTO) (u *user.User, err error) {
 	q := `
 	UPDATE public.user 
 	SET username = $1, email = $2, password_hash = $3 
@@ -51,14 +54,16 @@ func (r *repository) Update(ctx context.Context, userObj user.User, userUpdate u
 	RETURNING id, username, email, password_hash;`
 
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
-	if err := r.client.QueryRow(ctx, q, userUpdate.Username, userUpdate.Email, userUpdate.PasswordHash, userObj.ID).Scan(&userUpdate.Username, &userUpdate.Email); err != nil {
+	if err := r.client.QueryRow(ctx, q, userUpdate.Username, userUpdate.Email, userUpdate.PasswordHash, userObj.ID).Scan(&userObj.ID, &userObj.Username, &userObj.Email, &userObj.Password); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
-			r.logger.Error(newErr)
-			return userUpdate, newErr
+			if pgErr.Code == "23505" {
+				return nil, apperror.UserAlreadyExist
+			}
+			return nil, newErr
 		}
 	}
-	return userUpdate, nil
+	return &userObj, nil
 }
 
 func (r *repository) Delete(ctx context.Context, id int) error {
@@ -70,9 +75,9 @@ func (r *repository) Delete(ctx context.Context, id int) error {
 	if err := r.client.QueryRow(ctx, q, id).Scan(&id); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
-			r.logger.Error(newErr)
 			return newErr
 		}
+		return err
 	}
 	return nil
 
@@ -105,7 +110,7 @@ func (r *repository) FindAll(ctx context.Context) (u []user.User, err error) {
 
 }
 
-func (r *repository) FindOneById(ctx context.Context, id int) (user.User, error) {
+func (r *repository) FindOneById(ctx context.Context, id int) (u *user.User, err error) {
 	q := `
 		SELECT id, username, email FROM public.user WHERE id = $1
 	`
@@ -113,16 +118,18 @@ func (r *repository) FindOneById(ctx context.Context, id int) (user.User, error)
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
 
 	var userInfo user.User
-	err := r.client.QueryRow(ctx, q, id).Scan(&userInfo.ID, &userInfo.Username, &userInfo.Email)
-	if err != nil {
-		return user.User{}, err
+	if err := r.client.QueryRow(ctx, q, id).Scan(&userInfo.ID, &userInfo.Username, &userInfo.Email); err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
+			return nil, newErr
+		}
+		return nil, err
 	}
-
-	return userInfo, nil
+	return &userInfo, nil
 
 }
 
-func (r *repository) FindOneByUsername(ctx context.Context, username string) (user.User, error) {
+func (r *repository) FindOneByUsername(ctx context.Context, username string) (u *user.User, err error) {
 	q := `
 		SELECT id, username, email FROM public.user WHERE username = $1
 	`
@@ -130,16 +137,16 @@ func (r *repository) FindOneByUsername(ctx context.Context, username string) (us
 
 	var userInfo user.User
 
-	err := r.client.QueryRow(ctx, q, username).Scan(&userInfo.ID, &userInfo.Username, &userInfo.Email)
+	err = r.client.QueryRow(ctx, q, username).Scan(&userInfo.ID, &userInfo.Username, &userInfo.Email)
 	if err != nil {
-		return user.User{}, err
+		return nil, err
 	}
 
-	return userInfo, nil
+	return &userInfo, nil
 
 }
 
-func (r *repository) FindOneByEmail(ctx context.Context, email string) (user.User, error) {
+func (r *repository) FindOneByEmail(ctx context.Context, email string) (u *user.User, err error) {
 	q := `
 		SELECT id, username, email FROM public.user WHERE email = $1
 	`
@@ -147,11 +154,11 @@ func (r *repository) FindOneByEmail(ctx context.Context, email string) (user.Use
 
 	var userInfo user.User
 
-	err := r.client.QueryRow(ctx, q, email).Scan(&userInfo.ID, &userInfo.Username, &userInfo.Email)
+	err = r.client.QueryRow(ctx, q, email).Scan(&userInfo.ID, &userInfo.Username, &userInfo.Email)
 	if err != nil {
-		return user.User{}, err
+		return nil, err
 	}
 
-	return userInfo, nil
+	return &userInfo, nil
 
 }

@@ -1,7 +1,6 @@
 package post
 
 type CreatePostDTO struct {
-	Id          int    `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	OwnerId     int    `json:"owner_id"`

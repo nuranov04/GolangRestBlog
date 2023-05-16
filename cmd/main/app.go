@@ -24,7 +24,6 @@ func main() {
 
 	logger := logging.GetLogger()
 	logger.Info("Server is starting")
-
 	router := httprouter.New()
 
 	cfg := config.GetConfig()

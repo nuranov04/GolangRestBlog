@@ -80,7 +80,7 @@ func (h handler) CreatePost(w http.ResponseWriter, request *http.Request) error 
 	if err != nil {
 		return err
 	}
-	createdPostBytes, err := json.Marshal(createdPost)
+	createdPostBytes, err := json.Marshal(*createdPost)
 	if err != nil {
 		return err
 	}
@@ -97,14 +97,17 @@ func (h handler) UpdatePost(w http.ResponseWriter, request *http.Request) error 
 		return apperror.IdQueryParamError
 	}
 	postObj, err := h.service.FindOneById(context.TODO(), postIdInt)
-
+	if err != nil {
+		return apperror.ErrorNotFound
+	}
 	var updatePost UpdatePostDTO
 	if err := json.NewDecoder(request.Body).Decode(&updatePost); err != nil {
+		h.logger.Debug(err)
 		return apperror.BadRequestError("can't decode")
 	}
 	updatedPostObj, err := h.service.Update(context.TODO(), postObj, updatePost)
 	if err != nil {
-		return apperror.BadRequestError("can't update user")
+		return err
 	}
 	updatedPostObjBytes, err := json.Marshal(updatedPostObj)
 	if err != nil {
@@ -128,6 +131,7 @@ func (h handler) DeletePost(w http.ResponseWriter, request *http.Request) error 
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
+	w.Write([]byte("status: Deleted"))
 	w.WriteHeader(http.StatusOK)
 	return nil
 }

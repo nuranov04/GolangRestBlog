@@ -6,9 +6,10 @@ import (
 )
 
 var (
-	ErrorNotFound     = NewAppError("not found", "US-000003", "")
-	UserAlreadyExist  = NewAppError("user already exist", "US-000005", "")
-	IdQueryParamError = NewAppError("param id must be number", "US-00006", "")
+	ErrorNotFound         = NewAppError("not found", "US-000003", "")
+	UserAlreadyExist      = NewAppError("username or email already exist", "US-000005", "")
+	PostTitleAlreadyExist = NewAppError("post title already exist", "US-000005", "")
+	IdQueryParamError     = NewAppError("param id must be number", "US-00006", "")
 )
 
 type AppError struct {

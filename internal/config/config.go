@@ -13,15 +13,16 @@ type Config struct {
 		BindIp string `yaml:"bind_ip" env-default:"0.0.0.0"`
 		Port   string `yaml:"port" env-default:"8000"`
 	} `yaml:"listen"`
-	Storage StorageConfig `yaml:"storage"`
-}
-
-type StorageConfig struct {
-	Host     string `json:"host"`
-	Port     string `json:"port"`
-	Database string `json:"database"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Storage struct {
+		Host     string `json:"host"`
+		Port     string `json:"port"`
+		Database string `json:"database"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+	} `yaml:"storage"`
+	JWT struct {
+		Secret string `yaml:"secret" env-required:"true"`
+	}
 }
 
 var instance *Config

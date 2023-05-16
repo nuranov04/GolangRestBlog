@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgconn"
+	apperror "go.mod/internal/apperror"
 	"go.mod/internal/post"
 	"go.mod/pkg/client/postgresql"
 	"go.mod/pkg/logging"
@@ -22,21 +23,53 @@ func NewRepository(client postgresql.Client, logger *logging.Logger) post.Storag
 	}
 }
 
-func (r *repository) Create(ctx context.Context, postObj post.CreatePostDTO) (p *post.CreatePostDTO, err error) {
+func (r *repository) Create(ctx context.Context, postObj post.CreatePostDTO) (p *post.Post, err error) {
 	q := `
 	INSERT INTO public.post (title, description, owner_id) VALUES ($1, $2, $3) RETURNING id, title, description, owner_id
 	`
+
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
-	if err := r.client.QueryRow(ctx, q, postObj.Title, postObj.Description, postObj.OwnerId).Scan(&postObj.Id, &postObj.Title, &postObj.Description, &postObj.OwnerId); err != nil {
+	var postDTO post.Post
+	if err := r.client.QueryRow(ctx, q, postObj.Title, postObj.Description, postObj.OwnerId).Scan(&postDTO.ID, &postDTO.Title, &postDTO.Description, &postDTO.OwnerId); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
-			r.logger.Error(newErr)
+			if pgErr.Code == "23505" {
+				return nil, apperror.PostTitleAlreadyExist
+			}
 			return nil, newErr
 		}
 		return nil, err
 	}
-	r.logger.Debug(postObj)
-	return &postObj, nil
+	return &postDTO, nil
+}
+
+func (r *repository) Update(ctx context.Context, postObj *post.Post, postUpdate post.UpdatePostDTO) (u *post.Post, err error) {
+	q := `
+		UPDATE public.post 
+		SET title = $1, description = $2 
+		WHERE id = (
+			SELECT id
+			FROM public.post
+			WHERE id = $3
+			AND owner_id = $4
+			LIMIT 1
+			FOR UPDATE 
+		)
+	RETURNING title, description;`
+
+	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
+
+	if err := r.client.QueryRow(ctx, q, postUpdate.Title, postUpdate.Description, postObj.ID, postObj.OwnerId).Scan(&postObj.Title, &postObj.Description); err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
+			if pgErr.Code == "23505" {
+				return nil, apperror.PostTitleAlreadyExist
+			}
+			return nil, newErr
+		}
+		return nil, err
+	}
+	return postObj, nil
 }
 
 func (r *repository) FindOne(ctx context.Context, id int) (u *post.Post, err error) {
@@ -46,13 +79,12 @@ func (r *repository) FindOne(ctx context.Context, id int) (u *post.Post, err err
 	if err := r.client.QueryRow(ctx, q, id).Scan(&postObj.ID, &postObj.Title, &postObj.Description, &postObj.OwnerId); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
-			r.logger.Error(newErr)
-			return &postObj, newErr
+			return nil, newErr
 		}
 		r.logger.Debug(err)
-		return &postObj, err
+		return nil, err
 	}
-	return &postObj, err
+	return &postObj, nil
 }
 
 func (r *repository) FindAll(ctx context.Context) (u []post.Post, err error) {
@@ -101,33 +133,6 @@ func (r *repository) FindUserAllPosts(ctx context.Context, userId int) ([]post.P
 	return posts, nil
 }
 
-func (r *repository) Update(ctx context.Context, postObj *post.Post, postUpdate post.UpdatePostDTO) (u *post.Post, err error) {
-	q := `
-		UPDATE public.post 
-		SET title = $1, description = $2 
-		WHERE id = (
-			SELECT id
-			FROM public.post
-			WHERE id = $3
-			AND owner_id = $4
-			LIMIT 1
-			FOR UPDATE 
-		)
-	RETURNING title, description;`
-
-	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
-
-	if err := r.client.QueryRow(ctx, q, postUpdate.Title, postUpdate.Description, postObj.ID, postObj.OwnerId).Scan(&postObj.Title, &postObj.Description); err != nil {
-		if pgErr, ok := err.(*pgconn.PgError); ok {
-			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
-			r.logger.Error(newErr)
-			return &post.Post{}, newErr
-		}
-		return &post.Post{}, err
-	}
-	return postObj, nil
-}
-
 func (r *repository) Delete(ctx context.Context, id int) error {
 	q := `
 	DELETE FROM public.post WHERE id=$1
@@ -138,7 +143,6 @@ func (r *repository) Delete(ctx context.Context, id int) error {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
 			return newErr
 		}
-		return err
 	}
 	return nil
 }

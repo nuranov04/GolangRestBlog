@@ -8,9 +8,9 @@ import (
 type Service interface {
 	Create(ctx context.Context, post CreatePostDTO) (*CreatePostDTO, error)
 	Delete(ctx context.Context, postId int) error
-	Update(ctx context.Context, post *Post, postUpdate UpdatePostDTO) (*Post, error)
+	Update(ctx context.Context, post *Post, postUpdate UpdatePostDTO) (u *Post, err error)
 	FindAll(ctx context.Context) ([]Post, error)
-	FindOneById(ctx context.Context, id int) (*Post, error)
+	FindOneById(ctx context.Context, id int) (u *Post, err error)
 	FindUserPosts(ctx context.Context, userId int) ([]Post, error)
 }
 
@@ -26,7 +26,7 @@ func NewService(storage Storage, logger *logging.Logger) *service {
 	}
 }
 
-func (s *service) Create(ctx context.Context, post CreatePostDTO) (*CreatePostDTO, error) {
+func (s *service) Create(ctx context.Context, post CreatePostDTO) (*Post, error) {
 	postObj, err := s.storage.Create(ctx, post)
 	if err != nil {
 		return nil, err
@@ -35,14 +35,17 @@ func (s *service) Create(ctx context.Context, post CreatePostDTO) (*CreatePostDT
 }
 
 func (s *service) Delete(ctx context.Context, postId int) error {
-	return s.storage.Delete(ctx, postId)
-
+	err := s.storage.Delete(ctx, postId)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (s *service) Update(ctx context.Context, post *Post, postUpdate UpdatePostDTO) (*Post, error) {
+func (s *service) Update(ctx context.Context, post *Post, postUpdate UpdatePostDTO) (u *Post, err error) {
 	updated, err := s.storage.Update(ctx, post, postUpdate)
 	if err != nil {
-		return &Post{}, err
+		return nil, err
 	}
 	return updated, nil
 }
@@ -55,10 +58,10 @@ func (s *service) FindAll(ctx context.Context) ([]Post, error) {
 	return all, nil
 }
 
-func (s *service) FindOneById(ctx context.Context, id int) (*Post, error) {
+func (s *service) FindOneById(ctx context.Context, id int) (u *Post, err error) {
 	post, err := s.storage.FindOne(ctx, id)
 	if err != nil {
-		return &Post{}, err
+		return nil, err
 	}
 	return post, nil
 }
