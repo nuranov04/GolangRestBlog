@@ -10,7 +10,7 @@ RUN go mod download
 
 COPY . ./
 
-RUN CGO_ENABLED=0 go build /app/cmd/main/app.go
+RUN CGO_ENABLED=0 go build /app/cmd/app.go
 
 CMD ["./app"]
 
