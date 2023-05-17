@@ -32,6 +32,14 @@ func main() {
 	cfg := config.GetConfig()
 	logger.Info("read application configs")
 
+	//opts := middleware.SwaggerUIOpts{}
+	//
+	//sh := middleware.SwaggerUI(opts, nil)
+	//
+	//router.Handler(http.MethodGet, "/", sh)
+
+	router.ServeFiles("/swagger/*filepath", http.Dir("docs"))
+
 	postgresClient, err := postgresql.NewClient(context.Background(), 3, cfg)
 	if err != nil {
 		logger.Fatal(err)

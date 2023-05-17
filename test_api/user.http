@@ -42,3 +42,7 @@ Accept: application/json
 ### LOGIN
 POST http://0.0.0.0:8000/users/login/?username=admin&password=admin
 Accept: application/json
+
+
+###
+GET http://0.0.0.0:8000/docs/swagger.json
