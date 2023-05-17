@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"github.com/cristalhq/jwt/v3"
 	"github.com/google/uuid"
+	"go.mod/internal/apps/user"
 	"go.mod/internal/config"
-	"go.mod/internal/model"
 	"go.mod/pkg/cache"
 	"go.mod/pkg/logging"
+	"strconv"
 	"time"
 )
 
@@ -23,16 +24,16 @@ type RT struct {
 }
 
 type helper struct {
-	Logger  logging.Logger
+	Logger  *logging.Logger
 	RTCache cache.Repository
 }
 
-func NewHelper(RTCache cache.Repository, logger logging.Logger) Helper {
+func NewHelper(RTCache cache.Repository, logger *logging.Logger) Helper {
 	return &helper{RTCache: RTCache, Logger: logger}
 }
 
 type Helper interface {
-	GenerateAccessToken(u model.User) ([]byte, error)
+	GenerateAccessToken(u user.User) ([]byte, error)
 	UpdateRefreshToken(rt RT) ([]byte, error)
 }
 
@@ -43,7 +44,7 @@ func (h *helper) UpdateRefreshToken(rt RT) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	var u model.User
+	var u user.User
 	err = json.Unmarshal(userBytes, &u)
 	if err != nil {
 		return nil, err
@@ -51,22 +52,24 @@ func (h *helper) UpdateRefreshToken(rt RT) ([]byte, error) {
 	return h.GenerateAccessToken(u)
 }
 
-func (h *helper) GenerateAccessToken(u model.User) ([]byte, error) {
+func (h *helper) GenerateAccessToken(u user.User) ([]byte, error) {
 	key := []byte(config.GetConfig().JWT.Secret)
 	signer, err := jwt.NewSignerHS(jwt.HS256, key)
 	if err != nil {
 		return nil, err
 	}
 	builder := jwt.NewBuilder(signer)
+	h.Logger.Info(builder)
 
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        string(u.ID),
+			ID:        strconv.Itoa(u.ID),
 			Audience:  []string{"users"},
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 60)),
 		},
-		Email: u.Email,
+		Email: u.Username,
 	}
+	h.Logger.Info(claims)
 	token, err := builder.Build(claims)
 	if err != nil {
 		return nil, err
@@ -75,7 +78,7 @@ func (h *helper) GenerateAccessToken(u model.User) ([]byte, error) {
 	h.Logger.Info("create refresh token")
 	refreshTokenUuid := uuid.New()
 	userBytes, _ := json.Marshal(u)
-	err = h.RTCache.Set([]byte(refreshTokenUuid.String()), userBytes, 0)
+	err = h.RTCache.Set([]byte(refreshTokenUuid.String()), userBytes, 100)
 	if err != nil {
 		h.Logger.Error(err)
 		return nil, err

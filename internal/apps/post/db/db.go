@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"github.com/jackc/pgconn"
 	"go.mod/internal/apperror"
-	"go.mod/internal/model"
-	"go.mod/internal/storage"
+	"go.mod/internal/apps/post"
 	"go.mod/pkg/client/postgresql"
 	"go.mod/pkg/logging"
 	"go.mod/pkg/utils"
@@ -17,20 +16,20 @@ type postRepository struct {
 	logger *logging.Logger
 }
 
-func NewPostRepository(client postgresql.Client, logger *logging.Logger) storage.PostStorage {
+func NewPostRepository(client postgresql.Client, logger *logging.Logger) post.Storage {
 	return &postRepository{
 		client: client,
 		logger: logger,
 	}
 }
 
-func (r *postRepository) Create(ctx context.Context, postObj model.CreatePostDTO) (u *model.Post, err error) {
+func (r *postRepository) Create(ctx context.Context, postObj post.CreatePostDTO) (u *post.Post, err error) {
 	q := `
 	INSERT INTO public.post (title, description, owner_id) VALUES ($1, $2, $3) RETURNING id, title, description, owner_id
 	`
 
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
-	var postDTO model.Post
+	var postDTO post.Post
 	if err := r.client.QueryRow(ctx, q, postObj.Title, postObj.Description, postObj.OwnerId).Scan(&postDTO.ID, &postDTO.Title, &postDTO.Description, &postDTO.OwnerId); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
@@ -44,7 +43,7 @@ func (r *postRepository) Create(ctx context.Context, postObj model.CreatePostDTO
 	return &postDTO, nil
 }
 
-func (r *postRepository) Update(ctx context.Context, postObj *model.Post, postUpdate model.UpdatePostDTO) (u *model.Post, err error) {
+func (r *postRepository) Update(ctx context.Context, postObj *post.Post, postUpdate post.UpdatePostDTO) (u *post.Post, err error) {
 	q := `
 		UPDATE public.post 
 		SET title = $1, description = $2 
@@ -73,10 +72,10 @@ func (r *postRepository) Update(ctx context.Context, postObj *model.Post, postUp
 	return postObj, nil
 }
 
-func (r *postRepository) FindOne(ctx context.Context, id int) (u *model.Post, err error) {
+func (r *postRepository) FindOne(ctx context.Context, id int) (u *post.Post, err error) {
 	q := `SELECT id, title, description, owner_id FROM public.post WHERE id = $1`
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
-	var postObj model.Post
+	var postObj post.Post
 	if err := r.client.QueryRow(ctx, q, id).Scan(&postObj.ID, &postObj.Title, &postObj.Description, &postObj.OwnerId); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
@@ -88,7 +87,7 @@ func (r *postRepository) FindOne(ctx context.Context, id int) (u *model.Post, er
 	return &postObj, nil
 }
 
-func (r *postRepository) FindAll(ctx context.Context) (u []model.Post, err error) {
+func (r *postRepository) FindAll(ctx context.Context) (u []post.Post, err error) {
 	q := `SELECT id, title, description, owner_id FROM public.post`
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
 	query, err := r.client.Query(ctx, q)
@@ -96,10 +95,10 @@ func (r *postRepository) FindAll(ctx context.Context) (u []model.Post, err error
 		return nil, err
 	}
 
-	posts := make([]model.Post, 0)
+	posts := make([]post.Post, 0)
 	r.logger.Debug(query)
 	for query.Next() {
-		var postInfo model.Post
+		var postInfo post.Post
 		err := query.Scan(&postInfo.ID, &postInfo.Title, &postInfo.Description, &postInfo.OwnerId)
 		if err != nil {
 			return nil, err
@@ -110,7 +109,7 @@ func (r *postRepository) FindAll(ctx context.Context) (u []model.Post, err error
 	return posts, nil
 }
 
-func (r *postRepository) FindUserAllPosts(ctx context.Context, userId int) ([]model.Post, error) {
+func (r *postRepository) FindUserAllPosts(ctx context.Context, userId int) ([]post.Post, error) {
 	q := `
 			SELECT id, title, description, owner_id FROM public.post WHERE owner_id = $1
 	`
@@ -121,9 +120,9 @@ func (r *postRepository) FindUserAllPosts(ctx context.Context, userId int) ([]mo
 	}
 	defer query.Close()
 
-	posts := make([]model.Post, 0)
+	posts := make([]post.Post, 0)
 	for query.Next() {
-		var postInfo model.Post
+		var postInfo post.Post
 		err := query.Scan(&postInfo.ID, &postInfo.Title, &postInfo.Description, &postInfo.OwnerId)
 		if err != nil {
 			return nil, err

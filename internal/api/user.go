@@ -1,4 +1,4 @@
-package handlers
+package api
 
 import (
 	"context"
@@ -6,8 +6,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"go.mod/internal"
 	"go.mod/internal/apperror"
-	"go.mod/internal/model"
-	"go.mod/internal/service"
+	"go.mod/internal/apps/user"
 	"go.mod/pkg/jwt"
 	"go.mod/pkg/logging"
 	"net/http"
@@ -19,19 +18,20 @@ const (
 	userUrlId       = "/users/id/"
 	userUrlEmail    = "/users/email/"
 	userUrlUsername = "/users/username/"
-	loginUrl        = "/login/"
+	loginUrl        = "/users/login/"
 )
 
 type userHandler struct {
 	logger    logging.Logger
-	service   service.UserService
+	service   user.Service
 	JWTHelper jwt.Helper
 }
 
-func NewUserHandler(logger logging.Logger, service service.UserService) internal.Handler {
+func NewUserHandler(logger logging.Logger, service user.Service, jwtHelper jwt.Helper) internal.Handler {
 	return &userHandler{
-		logger:  logger,
-		service: service,
+		logger:    logger,
+		service:   service,
+		JWTHelper: jwtHelper,
 	}
 }
 
@@ -47,18 +47,6 @@ func (h userHandler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPut, loginUrl, apperror.Middleware(h.Login))
 }
 
-func (h userHandler) GetList(w http.ResponseWriter, request *http.Request) error {
-	userList, err := h.service.FindAll(context.TODO())
-	userListBytes, err := json.Marshal(userList)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write(userListBytes)
-	return nil
-}
-
 func (h userHandler) Login(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	var (
@@ -67,12 +55,12 @@ func (h userHandler) Login(w http.ResponseWriter, request *http.Request) error {
 	)
 	switch request.Method {
 	case http.MethodPost:
-		defer request.Body.Close()
-		var SignInDTO model.LoginDTO
-		if err := json.NewDecoder(request.Body).Decode(&SignInDTO); err != nil {
-			return apperror.BadRequestError("failed to decode data")
+		username := request.URL.Query().Get("username")
+		password := request.URL.Query().Get("password")
+		if username == "" || password == "" {
+			return apperror.BadRequestError("invalid query parameters email or password")
 		}
-		u, err := h.service.FindUserByUsernameAndPassword(context.TODO(), SignInDTO)
+		u, err := h.service.FindUserByUsernameAndPassword(context.TODO(), username, password)
 		if err != nil {
 			return err
 		}
@@ -80,8 +68,8 @@ func (h userHandler) Login(w http.ResponseWriter, request *http.Request) error {
 		if err != nil {
 			return err
 		}
+		h.logger.Info("After")
 	case http.MethodPut:
-		defer request.Body.Close()
 		var rt jwt.RT
 		if err := json.NewDecoder(request.Body).Decode(&rt); err != nil {
 			return apperror.BadRequestError("failed to decode data")
@@ -97,9 +85,21 @@ func (h userHandler) Login(w http.ResponseWriter, request *http.Request) error {
 	return nil
 }
 
+func (h userHandler) GetList(w http.ResponseWriter, request *http.Request) error {
+	userList, err := h.service.FindAll(context.TODO())
+	userListBytes, err := json.Marshal(userList)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return err
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(userListBytes)
+	return nil
+}
+
 func (h userHandler) CreateUser(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
-	var CreateUser model.CreateUserDTO
+	var CreateUser user.CreateUserDTO
 	if err := json.NewDecoder(request.Body).Decode(&CreateUser); err != nil {
 		return apperror.BadRequestError("can't decode")
 	}
@@ -131,7 +131,7 @@ func (h userHandler) UpdateUser(w http.ResponseWriter, request *http.Request) er
 	if err != nil {
 		return apperror.ErrorNotFound
 	}
-	var updateUser model.UpdateUserDTO
+	var updateUser user.UpdateUserDTO
 	if err := json.NewDecoder(request.Body).Decode(&updateUser); err != nil {
 		return apperror.BadRequestError("can't decode")
 	}

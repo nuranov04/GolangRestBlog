@@ -22,10 +22,10 @@ POST http://0.0.0.0:8000/users/
 Accept: application/json
 
 {
-"username": "artur_1",
-"email":"nuranov_1",
-"password":"password",
-"repeat_password":"password"
+"username": "admin",
+"email":"admin",
+"password":"admin",
+"repeat_password":"admin"
 }
 
 
@@ -38,3 +38,7 @@ Accept: application/json
   "username": "rewr1w",
   "password": "admin"
 }
+
+### LOGIN
+POST http://0.0.0.0:8000/users/login/?username=admin&password=admin
+Accept: application/json

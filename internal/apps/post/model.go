@@ -1,4 +1,4 @@
-package model
+package post
 
 type CreatePostDTO struct {
 	Title       string `json:"title"`
