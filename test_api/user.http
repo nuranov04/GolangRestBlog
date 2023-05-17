@@ -4,7 +4,7 @@ Accept: application/json
 
 
 ### Get User by id
-GET http://0.0.0.0:8000/users/id/?id=73
+GET http://0.0.0.0:8000/users/id/?id=1
 Accept: application/json
 
 
@@ -22,8 +22,8 @@ POST http://0.0.0.0:8000/users/
 Accept: application/json
 
 {
-"username": "admin",
-"email":"admin",
+"username": "artur",
+"email":"admin@gmail.com",
 "password":"admin",
 "repeat_password":"admin"
 }

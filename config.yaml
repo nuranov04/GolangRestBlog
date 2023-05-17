@@ -16,8 +16,8 @@ mongodb:
   password:
   collection: users
 storage:
-  host: localhost
+  host: go-blog.c8bslpbkmmhl.ap-northeast-1.rds.amazonaws.com
   port: 5432
-  database: goblog
+  database: go_blog
   username: postgres
-  password: 123
+  password: postgres
