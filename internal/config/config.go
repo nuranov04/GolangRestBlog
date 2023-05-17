@@ -22,7 +22,7 @@ type Config struct {
 		Type   string `yaml:"type" env-default:"port"`
 		BindIp string `yaml:"bind_ip" env-default:"0.0.0.0"`
 		Port   string `yaml:"port" env-default:"8000"`
-	} `yaml:"listen"`
+	} `yaml:"lister"`
 }
 
 var instance *Config
