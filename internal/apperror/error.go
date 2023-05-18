@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	ErrorNotFound         = NewAppError("not found", "US-000003", "")
+	ErrorNotFound         = NewAppError("data not found", "US-000003", "")
 	UserAlreadyExist      = NewAppError("username or email already exist", "US-000005", "")
 	PostTitleAlreadyExist = NewAppError("post title already exist", "US-000005", "")
 	IdQueryParamError     = NewAppError("param id must be number", "US-00006", "")
@@ -15,9 +15,9 @@ var (
 
 type AppError struct {
 	Err              error  `json:"-"`
-	Message          string `json:"message,omitempty"`
-	DeveloperMessage string `json:"developer_message,omitempty"`
-	Code             string `json:"code,omitempty"`
+	Message          string `json:"message"`
+	DeveloperMessage string `json:"developer_message"`
+	Code             string `json:"code"`
 }
 
 func (e *AppError) Error() string {

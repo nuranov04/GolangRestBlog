@@ -58,6 +58,7 @@ func (h userHandler) Login(w http.ResponseWriter, request *http.Request) error {
 		username := request.URL.Query().Get("username")
 		password := request.URL.Query().Get("password")
 		if username == "" || password == "" {
+			w.WriteHeader(http.StatusBadRequest)
 			return apperror.BadRequestError("invalid query parameters email or password")
 		}
 		u, err := h.service.FindUserByUsernameAndPassword(context.TODO(), username, password)
@@ -68,10 +69,10 @@ func (h userHandler) Login(w http.ResponseWriter, request *http.Request) error {
 		if err != nil {
 			return err
 		}
-		h.logger.Info("After")
 	case http.MethodPut:
 		var rt jwt.RT
 		if err := json.NewDecoder(request.Body).Decode(&rt); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 			return apperror.BadRequestError("failed to decode data")
 		}
 		token, err = h.JWTHelper.UpdateRefreshToken(rt)
@@ -173,7 +174,8 @@ func (h userHandler) GetUserByUsername(w http.ResponseWriter, request *http.Requ
 	username := request.URL.Query().Get("username")
 	userObj, err := h.service.FindOneByUsername(context.TODO(), username)
 	if err != nil {
-		return err
+		w.WriteHeader(http.StatusNotFound)
+		return apperror.ErrorNotFound
 	}
 	userObjBytes, err := json.Marshal(userObj)
 	if err != nil {

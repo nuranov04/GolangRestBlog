@@ -14,7 +14,7 @@ import (
 
 const (
 	postsUrl = "/posts"
-	postUrl  = "/posts/:id"
+	postUrl  = "/posts/id/"
 )
 
 type postHandler struct {
