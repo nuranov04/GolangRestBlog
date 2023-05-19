@@ -47,6 +47,18 @@ func (h userHandler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPut, loginUrl, apperror.Middleware(h.Login))
 }
 
+//func (h userHandler) Register(router *httprouter.Router) {
+//	router.HandlerFunc(http.MethodGet, usersUrl, cors2.MiddleCORS(apperror.Middleware(h.GetList)))
+//	router.HandlerFunc(http.MethodGet, userUrlId, cors2.MiddleCORS(apperror.Middleware(h.GetUserById)))
+//	router.HandlerFunc(http.MethodGet, userUrlEmail, cors2.MiddleCORS(apperror.Middleware(h.GetUserByEmail)))
+//	router.HandlerFunc(http.MethodGet, userUrlUsername, cors2.MiddleCORS(apperror.Middleware(h.GetUserByUsername)))
+//	router.HandlerFunc(http.MethodPost, usersUrl, cors2.MiddleCORS(apperror.Middleware(h.CreateUser)))
+//	router.HandlerFunc(http.MethodPut, userUrlId, cors2.MiddleCORS(apperror.Middleware(h.UpdateUser)))
+//	router.HandlerFunc(http.MethodDelete, userUrlId, cors2.MiddleCORS(apperror.Middleware(h.DeleteUser)))
+//	router.HandlerFunc(http.MethodPost, loginUrl, cors2.MiddleCORS(apperror.Middleware(h.Login)))
+//	router.HandlerFunc(http.MethodPut, loginUrl, cors2.MiddleCORS(apperror.Middleware(h.Login)))
+//}
+
 func (h userHandler) Login(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	var (

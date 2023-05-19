@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/rs/cors"
 	"go.mod/internal/api"
 	"go.mod/internal/apps/post"
 	db2 "go.mod/internal/apps/post/db"
@@ -32,14 +33,11 @@ func main() {
 	cfg := config.GetConfig()
 	logger.Info("read application configs")
 
-	//opts := middleware.SwaggerUIOpts{}
-	//
-	//sh := middleware.SwaggerUI(opts, nil)
-	//
-	//router.Handler(http.MethodGet, "/", sh)
-
 	router.ServeFiles("/swagger/*filepath", http.Dir("docs"))
 
+	corsHandler := cors.Default().Handler(router)
+
+	http.ListenAndServe("8000", corsHandler)
 	postgresClient, err := postgresql.NewClient(context.Background(), 3, cfg)
 	if err != nil {
 		logger.Fatal(err)
