@@ -18,9 +18,10 @@ func Middleware(h appHandler) http.HandlerFunc {
 					w.Write(ErrorNotFound.Marshal())
 					return
 				}
-				if errors.As(err, UserAlreadyExist) {
+				if errors.Is(err, UserAlreadyExist) {
 					w.WriteHeader(http.StatusBadRequest)
 					w.Write(UserAlreadyExist.Marshal())
+					return
 				}
 				err := err.(*AppError)
 				w.WriteHeader(http.StatusBadRequest)

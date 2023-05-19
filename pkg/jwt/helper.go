@@ -59,7 +59,6 @@ func (h *helper) GenerateAccessToken(u user.User) ([]byte, error) {
 		return nil, err
 	}
 	builder := jwt.NewBuilder(signer)
-	h.Logger.Info(builder)
 
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -69,18 +68,15 @@ func (h *helper) GenerateAccessToken(u user.User) ([]byte, error) {
 		},
 		Email: u.Username,
 	}
-	h.Logger.Info(claims)
 	token, err := builder.Build(claims)
 	if err != nil {
 		return nil, err
 	}
 
-	h.Logger.Info("create refresh token")
 	refreshTokenUuid := uuid.New()
 	userBytes, _ := json.Marshal(u)
 	err = h.RTCache.Set([]byte(refreshTokenUuid.String()), userBytes, 100)
 	if err != nil {
-		h.Logger.Error(err)
 		return nil, err
 	}
 

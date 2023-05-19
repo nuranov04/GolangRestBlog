@@ -102,16 +102,17 @@ func (h userHandler) CreateUser(w http.ResponseWriter, request *http.Request) er
 	w.Header().Set("Content-Type", "application/json")
 	var CreateUser user.CreateUserDTO
 	if err := json.NewDecoder(request.Body).Decode(&CreateUser); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		return apperror.BadRequestError("can't decode")
 	}
 
 	userObj, err := h.service.Create(context.TODO(), CreateUser)
+	h.logger.Info("error after create\n", err)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
 	userObjBytes, err := json.Marshal(*userObj)
-
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
@@ -158,7 +159,7 @@ func (h userHandler) GetUserById(w http.ResponseWriter, request *http.Request) e
 	}
 	userObj, err := h.service.FindOneById(context.TODO(), userIdInt)
 	if err != nil {
-		return err
+		return apperror.ErrorNotFound
 	}
 	userObjBytes, err := json.Marshal(userObj)
 	if err != nil {
@@ -191,7 +192,7 @@ func (h userHandler) GetUserByEmail(w http.ResponseWriter, request *http.Request
 	email := request.URL.Query().Get("email")
 	userObj, err := h.service.FindOneByEmail(context.TODO(), email)
 	if err != nil {
-		return err
+		return apperror.ErrorNotFound
 	}
 
 	userObjBytes, err := json.Marshal(userObj)

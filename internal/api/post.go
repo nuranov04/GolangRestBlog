@@ -99,7 +99,7 @@ func (h postHandler) UpdatePost(w http.ResponseWriter, request *http.Request) er
 	}
 	postObj, err := h.service.FindOneById(context.TODO(), postIdInt)
 	if err != nil {
-		return apperror.ErrorNotFound
+		return err
 	}
 	var updatePost post.UpdatePostDTO
 	if err := json.NewDecoder(request.Body).Decode(&updatePost); err != nil {
