@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"github.com/rs/cors"
 	"go.mod/internal/api"
 	"go.mod/internal/apps/post"
 	db2 "go.mod/internal/apps/post/db"
@@ -35,9 +34,6 @@ func main() {
 
 	router.ServeFiles("/swagger/*filepath", http.Dir("docs"))
 
-	corsHandler := cors.Default().Handler(router)
-
-	http.ListenAndServe("8000", corsHandler)
 	postgresClient, err := postgresql.NewClient(context.Background(), 3, cfg)
 	if err != nil {
 		logger.Fatal(err)
@@ -56,6 +52,7 @@ func main() {
 	postService := post.NewPostService(postRepository, logger)
 	postHandler := api.NewPostHandler(*logger, postService)
 	postHandler.Register(router)
+
 	start(router, cfg, logger)
 	fmt.Println("Server is started")
 }

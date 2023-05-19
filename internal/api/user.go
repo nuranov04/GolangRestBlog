@@ -7,6 +7,7 @@ import (
 	"go.mod/internal"
 	"go.mod/internal/apperror"
 	"go.mod/internal/apps/user"
+	"go.mod/pkg/cors"
 	"go.mod/pkg/jwt"
 	"go.mod/pkg/logging"
 	"net/http"
@@ -35,29 +36,29 @@ func NewUserHandler(logger logging.Logger, service user.Service, jwtHelper jwt.H
 	}
 }
 
-func (h userHandler) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, usersUrl, apperror.Middleware(h.GetList))
-	router.HandlerFunc(http.MethodGet, userUrlId, apperror.Middleware(h.GetUserById))
-	router.HandlerFunc(http.MethodGet, userUrlEmail, apperror.Middleware(h.GetUserByEmail))
-	router.HandlerFunc(http.MethodGet, userUrlUsername, apperror.Middleware(h.GetUserByUsername))
-	router.HandlerFunc(http.MethodPost, usersUrl, apperror.Middleware(h.CreateUser))
-	router.HandlerFunc(http.MethodPut, userUrlId, apperror.Middleware(h.UpdateUser))
-	router.HandlerFunc(http.MethodDelete, userUrlId, apperror.Middleware(h.DeleteUser))
-	router.HandlerFunc(http.MethodPost, loginUrl, apperror.Middleware(h.Login))
-	router.HandlerFunc(http.MethodPut, loginUrl, apperror.Middleware(h.Login))
-}
-
 //func (h userHandler) Register(router *httprouter.Router) {
-//	router.HandlerFunc(http.MethodGet, usersUrl, cors2.MiddleCORS(apperror.Middleware(h.GetList)))
-//	router.HandlerFunc(http.MethodGet, userUrlId, cors2.MiddleCORS(apperror.Middleware(h.GetUserById)))
-//	router.HandlerFunc(http.MethodGet, userUrlEmail, cors2.MiddleCORS(apperror.Middleware(h.GetUserByEmail)))
-//	router.HandlerFunc(http.MethodGet, userUrlUsername, cors2.MiddleCORS(apperror.Middleware(h.GetUserByUsername)))
-//	router.HandlerFunc(http.MethodPost, usersUrl, cors2.MiddleCORS(apperror.Middleware(h.CreateUser)))
-//	router.HandlerFunc(http.MethodPut, userUrlId, cors2.MiddleCORS(apperror.Middleware(h.UpdateUser)))
-//	router.HandlerFunc(http.MethodDelete, userUrlId, cors2.MiddleCORS(apperror.Middleware(h.DeleteUser)))
-//	router.HandlerFunc(http.MethodPost, loginUrl, cors2.MiddleCORS(apperror.Middleware(h.Login)))
-//	router.HandlerFunc(http.MethodPut, loginUrl, cors2.MiddleCORS(apperror.Middleware(h.Login)))
+//	router.HandlerFunc(http.MethodGet, usersUrl, apperror.Middleware(h.GetList))
+//	router.HandlerFunc(http.MethodGet, userUrlId, apperror.Middleware(h.GetUserById))
+//	router.HandlerFunc(http.MethodGet, userUrlEmail, apperror.Middleware(h.GetUserByEmail))
+//	router.HandlerFunc(http.MethodGet, userUrlUsername, apperror.Middleware(h.GetUserByUsername))
+//	router.HandlerFunc(http.MethodPost, usersUrl, apperror.Middleware(h.CreateUser))
+//	router.HandlerFunc(http.MethodPut, userUrlId, apperror.Middleware(h.UpdateUser))
+//	router.HandlerFunc(http.MethodDelete, userUrlId, apperror.Middleware(h.DeleteUser))
+//	router.HandlerFunc(http.MethodPost, loginUrl, apperror.Middleware(h.Login))
+//	router.HandlerFunc(http.MethodPut, loginUrl, apperror.Middleware(h.Login))
 //}
+
+func (h userHandler) Register(router *httprouter.Router) {
+	router.HandlerFunc(http.MethodGet, usersUrl, cors.MiddleCORS(apperror.Middleware(h.GetList)))
+	router.HandlerFunc(http.MethodGet, userUrlId, cors.MiddleCORS(apperror.Middleware(h.GetUserById)))
+	router.HandlerFunc(http.MethodGet, userUrlEmail, cors.MiddleCORS(apperror.Middleware(h.GetUserByEmail)))
+	router.HandlerFunc(http.MethodGet, userUrlUsername, cors.MiddleCORS(apperror.Middleware(h.GetUserByUsername)))
+	router.HandlerFunc(http.MethodPost, usersUrl, cors.MiddleCORS(apperror.Middleware(h.CreateUser)))
+	router.HandlerFunc(http.MethodPut, userUrlId, cors.MiddleCORS(apperror.Middleware(h.UpdateUser)))
+	router.HandlerFunc(http.MethodDelete, userUrlId, cors.MiddleCORS(apperror.Middleware(h.DeleteUser)))
+	router.HandlerFunc(http.MethodPost, loginUrl, cors.MiddleCORS(apperror.Middleware(h.Login)))
+	router.HandlerFunc(http.MethodPut, loginUrl, cors.MiddleCORS(apperror.Middleware(h.Login)))
+}
 
 func (h userHandler) Login(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
