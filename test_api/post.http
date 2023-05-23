@@ -3,7 +3,7 @@ GET http://0.0.0.0:8000/posts
 Accept: application/json
 
 ### Get post
-GET http://0.0.0.0:8000/posts/id/?id=4
+GET http://0.0.0.0:8000/posts/id/?id=1
 Accept: application/json
 
 
@@ -14,7 +14,7 @@ Content-Type: application/json
 {
   "title" : "artur",
   "description": "nuranov",
-  "owner_id":
+  "owner_id": 1
 }
 
 ### Update post

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"go.mod/internal/api"
 	"go.mod/internal/apps/post"
@@ -15,12 +14,7 @@ import (
 	"go.mod/pkg/jwt"
 	"go.mod/pkg/logging"
 	"log"
-	"net"
 	"net/http"
-	"os"
-	"path"
-	"path/filepath"
-	"time"
 )
 
 func main() {
@@ -54,44 +48,39 @@ func main() {
 	postHandler.Register(router)
 
 	start(router, cfg, logger)
-	fmt.Println("Server is started")
 }
 
 func start(router *httprouter.Router, cfg *config.Config, logger *logging.Logger) {
 
 	logger.Info("start application")
+	logger.Infof("server is listening port %s:%s", cfg.Listen.BindIp, cfg.Listen.Port)
 
-	var listener net.Listener
-	var ListenError error
+	log.Fatal(http.ListenAndServe(":8000", router))
 
-	if cfg.Listen.Type == "sock" {
-		appDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-		logger.Info(appDir)
-		if err != nil {
-			panic(err)
-		}
-		logger.Info("create socket")
+	//var listener net.Listener
+	//var ListenError error
 
-		socketPath := path.Join(appDir, "app.sock")
+	//if cfg.Listen.Type == "sock" {
+	//	appDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	//	logger.Info(appDir)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	logger.Info("create socket")
+	//
+	//	socketPath := path.Join(appDir, "app.sock")
+	//
+	//	listener, ListenError = net.Listen("unix", socketPath)
+	//
+	//	logger.Infof("Server is listening unix socket: %s", socketPath)
+	//} else {
+	//	logger.Info("listen tcp")
+	//	listener, ListenError = net.Listen("tcp", fmt.Sprintf("%s:%s", cfg.Listen.BindIp, cfg.Listen.Port))
+	//	logger.Infof("server is listening port %s:%s", cfg.Listen.BindIp, cfg.Listen.Port)
+	//}
 
-		listener, ListenError = net.Listen("unix", socketPath)
-
-		logger.Infof("Server is listening unix socket: %s", socketPath)
-	} else {
-		logger.Info("listen tcp")
-		listener, ListenError = net.Listen("tcp", fmt.Sprintf("%s:%s", cfg.Listen.BindIp, cfg.Listen.Port))
-		logger.Infof("server is listening port %s:%s", cfg.Listen.BindIp, cfg.Listen.Port)
-	}
-
-	if ListenError != nil {
-		panic(ListenError)
-	}
-
-	server := &http.Server{
-		Handler:      router,
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
-	}
-	log.Fatal(server.Serve(listener))
+	//if ListenError != nil {
+	//	panic(ListenError)
+	//}
 
 }
