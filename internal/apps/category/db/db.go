@@ -38,6 +38,21 @@ func (r *categoryRepository) FindOne(ctx context.Context, id int) (c *category.C
 	}
 	return &categoryDTO, nil
 }
+func (r *categoryRepository) FindOneByTitle(ctx context.Context, title string) (c *category.Category, err error) {
+	q := `
+	SELECT id, title, child_id FROM public.category WHERE title = $1
+	`
+	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
+	var categoryDTO category.Category
+	if err := r.client.QueryRow(ctx, q, title).Scan(&categoryDTO.Id, &categoryDTO.Title, &categoryDTO.ChildId); err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
+			return nil, newErr
+		}
+		return nil, err
+	}
+	return &categoryDTO, nil
+}
 
 func (r *categoryRepository) FindAll(ctx context.Context) (c []category.Category, err error) {
 	q := `
@@ -85,12 +100,42 @@ func (r *categoryRepository) Create(ctx context.Context, categoryDTO category.Cr
 	return &categoryInfo, nil
 }
 
-func (r *categoryRepository) Update(ctx context.Context, categoryUpdate category.CreateUpdateCategory, category category.Category) (c *category.Category, err error) {
-	//TODO implement me
-	panic("implement me")
+func (r *categoryRepository) Update(ctx context.Context, categoryUpdate category.CreateUpdateCategory, categoryDTO category.Category) (c *category.Category, err error) {
+	q := `
+	UPDATE public.category 
+	SET title=$1, child_id = $2
+	WHERE id = (
+	    SELECT id 
+	    FROM public.category
+	    WHERE id = $3
+	    LIMIT 1
+	    FOR UPDATE 
+	)
+	RETURNING id, title, child_id;`
+	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
+	if err := r.client.QueryRow(ctx, q, categoryUpdate.Title, categoryUpdate.ChildId, categoryDTO.Id).Scan(&categoryDTO.Id, &categoryDTO.Title, &categoryDTO.ChildId); err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
+			if pgErr.Code == "23505" {
+				return nil, apperror.CategoryTileAlreadyExist
+			}
+			return nil, newErr
+		}
+		return nil, err
+	}
+	return nil, err
 }
 
 func (r *categoryRepository) Delete(ctx context.Context, id int) error {
-	//TODO implement me
-	panic("implement me")
+	q := `	
+	DELETE FROM public.category WHERE id = $1;`
+	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
+	if err := r.client.QueryRow(ctx, q, id).Scan(&id); err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
+			return newErr
+		}
+		return err
+	}
+	return nil
 }

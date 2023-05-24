@@ -120,7 +120,6 @@ func (h userHandler) CreateUser(w http.ResponseWriter, request *http.Request) er
 	}
 
 	userObj, err := h.service.Create(context.TODO(), CreateUser)
-	h.logger.Info("error after create\n", err)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err

@@ -24,7 +24,7 @@ type userService struct {
 	logger  *logging.Logger
 }
 
-func NewUserService(storage Storage, logger *logging.Logger) *userService {
+func NewUserService(storage Storage, logger *logging.Logger) Service {
 	return &userService{
 		storage: storage,
 		logger:  logger,

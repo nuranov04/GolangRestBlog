@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/rs/cors"
 	"go.mod/internal/api"
 	"go.mod/internal/apps/post"
 	db2 "go.mod/internal/apps/post/db"
@@ -14,7 +16,12 @@ import (
 	"go.mod/pkg/jwt"
 	"go.mod/pkg/logging"
 	"log"
+	"net"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
+	"time"
 )
 
 func main() {
@@ -44,7 +51,7 @@ func main() {
 	logger.Info("Register Post api")
 	postRepository := db2.NewPostRepository(postgresClient, logger)
 	postService := post.NewPostService(postRepository, logger)
-	postHandler := api.NewPostHandler(*logger, postService)
+	postHandler := api.NewPostHandler(logger, postService)
 	postHandler.Register(router)
 
 	start(router, cfg, logger)
@@ -55,32 +62,38 @@ func start(router *httprouter.Router, cfg *config.Config, logger *logging.Logger
 	logger.Info("start application")
 	logger.Infof("server is listening port %s:%s", cfg.Listen.BindIp, cfg.Listen.Port)
 
-	log.Fatal(http.ListenAndServe(":8000", router))
+	//log.Fatal(http.ListenAndServe(":8000", router))
 
-	//var listener net.Listener
-	//var ListenError error
+	var listener net.Listener
+	var ListenError error
 
-	//if cfg.Listen.Type == "sock" {
-	//	appDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	//	logger.Info(appDir)
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	logger.Info("create socket")
-	//
-	//	socketPath := path.Join(appDir, "app.sock")
-	//
-	//	listener, ListenError = net.Listen("unix", socketPath)
-	//
-	//	logger.Infof("Server is listening unix socket: %s", socketPath)
-	//} else {
-	//	logger.Info("listen tcp")
-	//	listener, ListenError = net.Listen("tcp", fmt.Sprintf("%s:%s", cfg.Listen.BindIp, cfg.Listen.Port))
-	//	logger.Infof("server is listening port %s:%s", cfg.Listen.BindIp, cfg.Listen.Port)
-	//}
+	if cfg.Listen.Type == "sock" {
+		appDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		logger.Info(appDir)
+		if err != nil {
+			panic(err)
+		}
+		logger.Info("create socket")
 
-	//if ListenError != nil {
-	//	panic(ListenError)
-	//}
+		socketPath := path.Join(appDir, "app.sock")
 
+		listener, ListenError = net.Listen("unix", socketPath)
+
+		logger.Infof("Server is listening unix socket: %s", socketPath)
+	} else {
+		logger.Info("listen tcp")
+		listener, ListenError = net.Listen("tcp", fmt.Sprintf("%s:%s", cfg.Listen.BindIp, cfg.Listen.Port))
+		logger.Infof("server is listening port %s:%s", cfg.Listen.BindIp, cfg.Listen.Port)
+	}
+
+	if ListenError != nil {
+		panic(ListenError)
+	}
+	handler := cors.Default().Handler(router)
+	server := http.Server{
+		Handler:      handler,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+	}
+	log.Fatal(server.Serve(listener))
 }

@@ -18,11 +18,11 @@ const (
 )
 
 type postHandler struct {
-	logger  logging.Logger
+	logger  *logging.Logger
 	service post.Service
 }
 
-func NewPostHandler(logger logging.Logger, s post.Service) internal.Handler {
+func NewPostHandler(logger *logging.Logger, s post.Service) internal.Handler {
 	return &postHandler{
 		logger:  logger,
 		service: s,

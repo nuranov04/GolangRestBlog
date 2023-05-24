@@ -19,7 +19,7 @@ type postService struct {
 	logger  *logging.Logger
 }
 
-func NewPostService(storage Storage, logger *logging.Logger) *postService {
+func NewPostService(storage Storage, logger *logging.Logger) Service {
 	return &postService{
 		storage: storage,
 		logger:  logger,

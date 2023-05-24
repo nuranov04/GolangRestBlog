@@ -32,7 +32,29 @@ definitions:
       password:
         type: string
         minLength: 8
-  
+  createUser:
+    type: object
+    required:
+      - username, email, password
+    properties:
+      id:
+        type: integer
+        readOnly: true
+        uniqueItems: true
+      username:
+        type: string
+        minLength: 8
+        uniqueItems: true
+      email:
+        type: string
+        uniqueItems: true
+        format: string@example.com
+      password:
+        type: string
+        minLength: 8
+      repeat_password:
+        type: string
+        minLength: 8
 
   post:
     type: object
@@ -151,7 +173,7 @@ paths:
         - name: userObj
           in: body
           schema:
-            $ref: "#/definitions/user"
+            $ref: "#/definitions/createUser"
     get:
       description: Get list of users
 
