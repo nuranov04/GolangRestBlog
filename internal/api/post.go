@@ -6,7 +6,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"go.mod/internal"
 	"go.mod/internal/apperror"
-	"go.mod/internal/apps/post"
+	"go.mod/internal/apps/product"
 	"go.mod/pkg/logging"
 	"net/http"
 	"strconv"
@@ -19,10 +19,10 @@ const (
 
 type postHandler struct {
 	logger  *logging.Logger
-	service post.Service
+	service product.Service
 }
 
-func NewPostHandler(logger *logging.Logger, s post.Service) internal.Handler {
+func NewPostHandler(logger *logging.Logger, s product.Service) internal.Handler {
 	return &postHandler{
 		logger:  logger,
 		service: s,
@@ -73,7 +73,7 @@ func (h postHandler) GetPost(w http.ResponseWriter, request *http.Request) error
 
 func (h postHandler) CreatePost(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
-	var CreatePostDTO post.CreatePostDTO
+	var CreatePostDTO product.CreateProductDTO
 	if err := json.NewDecoder(request.Body).Decode(&CreatePostDTO); err != nil {
 		return apperror.BadRequestError("can't decode")
 	}
@@ -101,7 +101,7 @@ func (h postHandler) UpdatePost(w http.ResponseWriter, request *http.Request) er
 	if err != nil {
 		return err
 	}
-	var updatePost post.UpdatePostDTO
+	var updatePost product.UpdateProductDTO
 	if err := json.NewDecoder(request.Body).Decode(&updatePost); err != nil {
 		h.logger.Debug(err)
 		return apperror.BadRequestError("can't decode")

@@ -1,0 +1,295 @@
+info:
+  title: "BLOG"
+  version: "1.0.0.0"
+schemes:
+  - http
+  - https
+#host: 0.0.0.0:8000
+
+
+definitions:
+  user:
+    type: object
+    required:
+      - username, email, password
+    properties:
+      id:
+        type: integer
+        readOnly: true
+        uniqueItems: true
+      username:
+        type: string
+        minLength: 8
+        uniqueItems: true
+      email:
+        type: string
+        uniqueItems: true
+        format: string@example.com
+      password:
+        type: string
+        minLength: 8
+  
+
+  post:
+    type: object
+    required:
+      - title, description, OwnerId
+    properties:
+      id:
+        type: integer
+        readOnly: true
+        uniqueItems: true
+      title:
+        type: string
+        uniqueItems: true
+      description:
+        type: string
+      ownerId:
+        type: integer
+  token:
+    type: object
+    properties:
+      token:
+        type: string
+      refresh_token:
+        type: string
+
+
+  error:
+    type: object
+    required:
+      - message
+    properties:
+      message:
+        type: string
+        readOnly: true
+      developer_message:
+        type: string
+        readOnly: true
+      code:
+        type: string
+        readOnly: true
+
+  internalError:
+    description: Internal Server Error
+
+paths:
+  /users/login/:
+    post:
+      parameters:
+        - name: username
+          in: query
+          type: string
+        - name: password
+          in: query
+          type: string
+      responses:
+        "201":
+          description: "Token Created"
+          schema:
+            $ref: "#/definitions/token"
+        default:
+          $ref: "#/definitions/error"
+  /users/id/:
+    delete:
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: integer
+      tags:
+        - users
+      description: Delete user by id.
+      responses:
+        "200":
+          description: Deleted
+        "400":
+          description: Bad Request
+        "500":
+          $ref: "#/definitions/internalError"
+        default:
+          $ref: "#/definitions/error"
+    get:
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: integer
+      tags:
+        - users
+      description: Get User By Id
+      responses:
+        "200":
+          description: User object
+          schema:
+            type: object
+            $ref: "#/definitions/user"
+        "400":
+          description: Bad Request
+        "500":
+          $ref: "#/definitions/internalError"
+    put:
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: integer
+      tags:
+        - users
+      description: User Update
+      responses:
+        "200":
+          description: "User Updated"
+          schema:
+            type: object
+            $ref: "#/definitions/user"
+        400:
+          description: "Bad request"
+          schema:
+            type: object
+            $ref: '#/definitions/error'
+        "500":
+          $ref: "#/definitions/internalError"
+        default:
+          $ref: "#/definitions/error"
+  /users/username/:
+    get:
+      parameters:
+        - name: username
+          in: query
+          required: true
+          type: string
+      description: Get User By username
+      responses:
+        "200":
+          description: "Ok"
+          schema:
+            type: object
+            $ref: '#/definitions/user'
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+            $ref: '#/definitions/error'
+        "500":
+          $ref: "#/definitions/internalError"
+      tags:
+        - users
+  /users/email/:
+    get:
+      parameters:
+        - name: email
+          in: query
+          type: string
+          required: true
+      description: Get User By Email
+      responses:
+        "200":
+          description: Ok
+          schema:
+            type: object
+            $ref: "#/definitions/user"
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+            $ref: "#/definitions/error"
+        "500":
+          $ref: "#/definitions/internalError"
+      tags:
+        - users
+  /users/:
+    get:
+      description: Get list of users
+
+      responses:
+        200:
+          description: Ok
+          schema:
+            type: object
+            $ref: "#/definitions/user"
+        400:
+          description: Bad Request
+          schema:
+            type: object
+            $ref: "#/definitions/error"
+        "500":
+          $ref: "#/definitions/internalError"
+      tags:
+        - users
+
+    post:
+      description: Create User
+      parameters:
+        - name: user object
+          in: body
+          schema:
+            $ref: "#/definitions/user"
+      responses:
+        "201":
+          description: "Created"
+          schema:
+            $ref: "#/definitions/user"
+        "400":
+          description: "Bad request"
+        "500":
+          $ref: "#/definitions/internalError"
+        default:
+          $ref: "#/definitions/error"
+      tags:
+        - users
+
+  /posts/:
+    get:
+      tags:
+        - posts
+      description: Get list of posts
+      responses:
+        "200":
+          description: "Get List of Post"
+          schema:
+            type: array
+            description: "Post List"
+            $ref: "#/definitions/post"
+        "400":
+          description: "Bad Request"
+        "500":
+          $ref: "#/definitions/internalError"
+    post:
+      parameters:
+        - name: postObject
+          in: body
+          schema:
+            $ref: "#/definitions/post"
+      responses:
+        "200":
+          description: Create
+        "400":
+          description: Bad Request
+        "500":
+          $ref: "#/definitions/internalError"
+      tags:
+        - posts
+  /posts/id/:
+    get:
+      description: Get product by id
+      parameters:
+        - name: id
+          in: query
+          type: integer
+          required: true
+      responses:
+        "200":
+          description: "Get product by id"
+          schema:
+            type: object
+            $ref: "#/definitions/post"
+        "400":
+          description: "Bad request"
+          schema:
+            type: object
+            $ref: "#/definitions/error"
+        "500":
+          $ref: "#/definitions/internalError"
+
+swagger: "2.0"

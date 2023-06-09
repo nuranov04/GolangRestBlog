@@ -6,8 +6,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
 	"go.mod/internal/api"
-	"go.mod/internal/apps/post"
-	db2 "go.mod/internal/apps/post/db"
+	"go.mod/internal/apps/product"
+	db2 "go.mod/internal/apps/product/db"
 	"go.mod/internal/apps/user"
 	"go.mod/internal/apps/user/db"
 	"go.mod/internal/config"
@@ -49,8 +49,8 @@ func main() {
 	userHandler.Register(router)
 
 	logger.Info("Register Post api")
-	postRepository := db2.NewPostRepository(postgresClient, logger)
-	postService := post.NewPostService(postRepository, logger)
+	postRepository := db2.NewProductRepository(postgresClient, logger)
+	postService := product.NewPostService(postRepository, logger)
 	postHandler := api.NewPostHandler(logger, postService)
 	postHandler.Register(router)
 

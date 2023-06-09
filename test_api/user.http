@@ -53,8 +53,8 @@ POST http://18.183.48.52:8000/users/
 Accept: application/json
 
 {
-"username": "artur6",
-"email":"admin54@gmail.com",
+"username": "arturewq6",
+"email":"admewqin54@gmail.com",
 "password":"admin",
 "repeat_password":"admin"
 }

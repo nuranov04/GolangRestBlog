@@ -1,19 +1,21 @@
-package post
+package product
 
-type CreatePostDTO struct {
+type CreateProductDTO struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	OwnerId     int    `json:"owner_id"`
+	CategoryId  int    `json:"category_id"`
 }
 
-type UpdatePostDTO struct {
+type UpdateProductDTO struct {
 	Title       string `json:"title,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 
-type Post struct {
+type Product struct {
 	ID          int    `json:"id,omitempty"`
 	Title       string `json:"title,omitempty"`
 	Description string `json:"description,omitempty"`
 	OwnerId     int    `json:"owner_id,omitempty"`
+	CategoryId  int    `json:"category_id,omitempty"`
 }

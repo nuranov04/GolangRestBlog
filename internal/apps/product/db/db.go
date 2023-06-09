@@ -5,32 +5,32 @@ import (
 	"fmt"
 	"github.com/jackc/pgconn"
 	"go.mod/internal/apperror"
-	"go.mod/internal/apps/post"
+	"go.mod/internal/apps/product"
 	"go.mod/pkg/client/postgresql"
 	"go.mod/pkg/logging"
 	"go.mod/pkg/utils"
 )
 
-type postRepository struct {
+type ProductRepository struct {
 	client postgresql.Client
 	logger *logging.Logger
 }
 
-func NewPostRepository(client postgresql.Client, logger *logging.Logger) post.Storage {
-	return &postRepository{
+func NewProductRepository(client postgresql.Client, logger *logging.Logger) product.Storage {
+	return &ProductRepository{
 		client: client,
 		logger: logger,
 	}
 }
 
-func (r *postRepository) Create(ctx context.Context, postObj post.CreatePostDTO) (u *post.Post, err error) {
+func (r *ProductRepository) Create(ctx context.Context, ProductObj product.CreateProductDTO) (u *product.Product, err error) {
 	q := `
-	INSERT INTO public.post (title, description, owner_id) VALUES ($1, $2, $3) RETURNING id, title, description, owner_id
+	INSERT INTO public.product (title, description, owner_id) VALUES ($1, $2, $3) RETURNING id, title, description, owner_id
 	`
 
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
-	var postDTO post.Post
-	if err := r.client.QueryRow(ctx, q, postObj.Title, postObj.Description, postObj.OwnerId).Scan(&postDTO.ID, &postDTO.Title, &postDTO.Description, &postDTO.OwnerId); err != nil {
+	var ProductDTO product.Product
+	if err := r.client.QueryRow(ctx, q, ProductObj.Title, ProductObj.Description, ProductObj.OwnerId).Scan(&ProductDTO.ID, &ProductDTO.Title, &ProductDTO.Description, &ProductDTO.OwnerId); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
 			if pgErr.Code == "23505" {
@@ -40,16 +40,16 @@ func (r *postRepository) Create(ctx context.Context, postObj post.CreatePostDTO)
 		}
 		return nil, err
 	}
-	return &postDTO, nil
+	return &ProductDTO, nil
 }
 
-func (r *postRepository) Update(ctx context.Context, postObj *post.Post, postUpdate post.UpdatePostDTO) (u *post.Post, err error) {
+func (r *ProductRepository) Update(ctx context.Context, ProductObj *product.Product, ProductUpdate product.UpdateProductDTO) (u *product.Product, err error) {
 	q := `
-		UPDATE public.post 
+		UPDATE public.product 
 		SET title = $1, description = $2 
 		WHERE id = (
 			SELECT id
-			FROM public.post
+			FROM public.product
 			WHERE id = $3
 			AND owner_id = $4
 			LIMIT 1
@@ -59,7 +59,7 @@ func (r *postRepository) Update(ctx context.Context, postObj *post.Post, postUpd
 
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
 
-	if err := r.client.QueryRow(ctx, q, postUpdate.Title, postUpdate.Description, postObj.ID, postObj.OwnerId).Scan(&postObj.Title, &postObj.Description); err != nil {
+	if err := r.client.QueryRow(ctx, q, ProductUpdate.Title, ProductUpdate.Description, ProductObj.ID, ProductObj.OwnerId).Scan(&ProductObj.Title, &ProductObj.Description); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
 			if pgErr.Code == "23505" {
@@ -69,14 +69,14 @@ func (r *postRepository) Update(ctx context.Context, postObj *post.Post, postUpd
 		}
 		return nil, err
 	}
-	return postObj, nil
+	return ProductObj, nil
 }
 
-func (r *postRepository) FindOne(ctx context.Context, id int) (u *post.Post, err error) {
-	q := `SELECT id, title, description, owner_id FROM public.post WHERE id = $1`
+func (r *ProductRepository) FindOne(ctx context.Context, id int) (u *product.Product, err error) {
+	q := `SELECT id, title, description, owner_id FROM public.product WHERE id = $1`
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
-	var postObj post.Post
-	if err := r.client.QueryRow(ctx, q, id).Scan(&postObj.ID, &postObj.Title, &postObj.Description, &postObj.OwnerId); err != nil {
+	var ProductObj product.Product
+	if err := r.client.QueryRow(ctx, q, id).Scan(&ProductObj.ID, &ProductObj.Title, &ProductObj.Description, &ProductObj.OwnerId); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
 			return nil, newErr
@@ -84,34 +84,34 @@ func (r *postRepository) FindOne(ctx context.Context, id int) (u *post.Post, err
 		r.logger.Debug(err)
 		return nil, err
 	}
-	return &postObj, nil
+	return &ProductObj, nil
 }
 
-func (r *postRepository) FindAll(ctx context.Context) (u []post.Post, err error) {
-	q := `SELECT id, title, description, owner_id FROM public.post`
+func (r *ProductRepository) FindAll(ctx context.Context) (u []product.Product, err error) {
+	q := `SELECT id, title, description, owner_id FROM public.product`
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
 	query, err := r.client.Query(ctx, q)
 	if err != nil {
 		return nil, err
 	}
 
-	posts := make([]post.Post, 0)
+	Products := make([]product.Product, 0)
 	r.logger.Debug(query)
 	for query.Next() {
-		var postInfo post.Post
-		err := query.Scan(&postInfo.ID, &postInfo.Title, &postInfo.Description, &postInfo.OwnerId)
+		var ProductInfo product.Product
+		err := query.Scan(&ProductInfo.ID, &ProductInfo.Title, &ProductInfo.Description, &ProductInfo.OwnerId)
 		if err != nil {
 			return nil, err
 		}
 
-		posts = append(posts, postInfo)
+		Products = append(Products, ProductInfo)
 	}
-	return posts, nil
+	return Products, nil
 }
 
-func (r *postRepository) FindUserAllPosts(ctx context.Context, userId int) ([]post.Post, error) {
+func (r *ProductRepository) FindUserAllProducts(ctx context.Context, userId int) ([]product.Product, error) {
 	q := `
-			SELECT id, title, description, owner_id FROM public.post WHERE owner_id = $1
+			SELECT id, title, description, owner_id FROM public.product WHERE owner_id = $1
 	`
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
 	query, err := r.client.Query(ctx, q, userId)
@@ -120,22 +120,22 @@ func (r *postRepository) FindUserAllPosts(ctx context.Context, userId int) ([]po
 	}
 	defer query.Close()
 
-	posts := make([]post.Post, 0)
+	Products := make([]product.Product, 0)
 	for query.Next() {
-		var postInfo post.Post
-		err := query.Scan(&postInfo.ID, &postInfo.Title, &postInfo.Description, &postInfo.OwnerId)
+		var ProductInfo product.Product
+		err := query.Scan(&ProductInfo.ID, &ProductInfo.Title, &ProductInfo.Description, &ProductInfo.OwnerId)
 		if err != nil {
 			return nil, err
 		}
 
-		posts = append(posts, postInfo)
+		Products = append(Products, ProductInfo)
 	}
-	return posts, nil
+	return Products, nil
 }
 
-func (r *postRepository) Delete(ctx context.Context, id int) error {
+func (r *ProductRepository) Delete(ctx context.Context, id int) error {
 	q := `
-	DELETE FROM public.post WHERE id=$1
+	DELETE FROM public.product WHERE id=$1
 	`
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", utils.FormatQuery(q)))
 	if err := r.client.QueryRow(ctx, q, id).Scan(&id); err != nil {
