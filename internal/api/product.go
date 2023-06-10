@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	postsUrl = "/posts"
-	postUrl  = "/posts/id/"
+	postsUrl = "/products"
+	postUrl  = "/products/id/"
 )
 
 type postHandler struct {
@@ -31,10 +31,10 @@ func NewPostHandler(logger *logging.Logger, s product.Service) internal.Handler 
 
 func (h postHandler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, postsUrl, apperror.Middleware(h.GetList))
-	router.HandlerFunc(http.MethodGet, postUrl, apperror.Middleware(h.GetPost))
-	router.HandlerFunc(http.MethodPost, postsUrl, apperror.Middleware(h.CreatePost))
-	router.HandlerFunc(http.MethodPut, postUrl, apperror.Middleware(h.UpdatePost))
-	router.HandlerFunc(http.MethodDelete, postUrl, apperror.Middleware(h.DeletePost))
+	router.HandlerFunc(http.MethodGet, postUrl, apperror.Middleware(h.Get))
+	router.HandlerFunc(http.MethodPost, postsUrl, apperror.Middleware(h.Create))
+	router.HandlerFunc(http.MethodPut, postUrl, apperror.Middleware(h.Update))
+	router.HandlerFunc(http.MethodDelete, postUrl, apperror.Middleware(h.Delete))
 }
 
 func (h postHandler) GetList(w http.ResponseWriter, request *http.Request) error {
@@ -52,7 +52,7 @@ func (h postHandler) GetList(w http.ResponseWriter, request *http.Request) error
 	return nil
 }
 
-func (h postHandler) GetPost(w http.ResponseWriter, request *http.Request) error {
+func (h postHandler) Get(w http.ResponseWriter, request *http.Request) error {
 	id := request.URL.Query().Get("id")
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
@@ -71,7 +71,7 @@ func (h postHandler) GetPost(w http.ResponseWriter, request *http.Request) error
 	return nil
 }
 
-func (h postHandler) CreatePost(w http.ResponseWriter, request *http.Request) error {
+func (h postHandler) Create(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	var CreatePostDTO product.CreateProductDTO
 	if err := json.NewDecoder(request.Body).Decode(&CreatePostDTO); err != nil {
@@ -90,7 +90,7 @@ func (h postHandler) CreatePost(w http.ResponseWriter, request *http.Request) er
 	return nil
 }
 
-func (h postHandler) UpdatePost(w http.ResponseWriter, request *http.Request) error {
+func (h postHandler) Update(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	postId := request.URL.Query().Get("id")
 	postIdInt, err := strconv.Atoi(postId)
@@ -120,7 +120,7 @@ func (h postHandler) UpdatePost(w http.ResponseWriter, request *http.Request) er
 	return nil
 }
 
-func (h postHandler) DeletePost(w http.ResponseWriter, request *http.Request) error {
+func (h postHandler) Delete(w http.ResponseWriter, request *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	postId := request.URL.Query().Get("id")
 	postIdInt, err := strconv.Atoi(postId)

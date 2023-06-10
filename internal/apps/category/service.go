@@ -19,11 +19,11 @@ type categoryService struct {
 	logger  *logging.Logger
 }
 
-func NewService(logger *logging.Logger, storage Storage) (Service, error) {
+func NewService(storage Storage, logger *logging.Logger) Service {
 	return &categoryService{
 		storage: storage,
 		logger:  logger,
-	}, nil
+	}
 }
 
 func (c *categoryService) Create(ctx context.Context, createUser CreateUpdateCategory) (u *Category, err error) {

@@ -34,7 +34,7 @@ func (r *ProductRepository) Create(ctx context.Context, ProductObj product.Creat
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
 			if pgErr.Code == "23505" {
-				return nil, apperror.PostTitleAlreadyExist
+				return nil, apperror.ProductTitleAlreadyExist
 			}
 			return nil, newErr
 		}
@@ -63,7 +63,7 @@ func (r *ProductRepository) Update(ctx context.Context, ProductObj *product.Prod
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState()))
 			if pgErr.Code == "23505" {
-				return nil, apperror.PostTitleAlreadyExist
+				return nil, apperror.ProductTitleAlreadyExist
 			}
 			return nil, newErr
 		}

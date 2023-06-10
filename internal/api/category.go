@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	categoriesUrl = "/categories/"
-	categoryUrl   = "/categories/id"
+	categoriesUrl    = "/categories/"
+	categoryIdUrl    = "/categories/id"
+	categoryTitleUrl = "/categories/title"
 )
 
 type categoryHandler struct {
@@ -30,10 +31,10 @@ func NewCategoryHandler(logger *logging.Logger, s category.Service) internal.Han
 }
 
 func (h categoryHandler) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, categoriesUrl, apperror.Middleware(h.Create))
+	router.HandlerFunc(http.MethodPost, categoriesUrl, apperror.Middleware(h.Create))
 	router.HandlerFunc(http.MethodGet, categoriesUrl, apperror.Middleware(h.GetList))
-	router.HandlerFunc(http.MethodGet, categoryUrl, apperror.Middleware(h.GetOneById))
-	router.HandlerFunc(http.MethodGet, categoryUrl, apperror.Middleware(h.GetOneByTitle))
+	router.HandlerFunc(http.MethodGet, categoryIdUrl, apperror.Middleware(h.GetOneById))
+	router.HandlerFunc(http.MethodGet, categoryTitleUrl, apperror.Middleware(h.GetOneByTitle))
 
 }
 

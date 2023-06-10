@@ -6,8 +6,10 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
 	"go.mod/internal/api"
+	"go.mod/internal/apps/category"
+	categorydb "go.mod/internal/apps/category/db"
 	"go.mod/internal/apps/product"
-	db2 "go.mod/internal/apps/product/db"
+	productdb "go.mod/internal/apps/product/db"
 	"go.mod/internal/apps/user"
 	"go.mod/internal/apps/user/db"
 	"go.mod/internal/config"
@@ -48,11 +50,17 @@ func main() {
 	userHandler := api.NewUserHandler(*logger, userService, jwtHelper)
 	userHandler.Register(router)
 
-	logger.Info("Register Post api")
-	postRepository := db2.NewProductRepository(postgresClient, logger)
-	postService := product.NewPostService(postRepository, logger)
-	postHandler := api.NewPostHandler(logger, postService)
-	postHandler.Register(router)
+	logger.Info("Register Product api")
+	productRepository := productdb.NewProductRepository(postgresClient, logger)
+	productService := product.NewService(productRepository, logger)
+	productHandler := api.NewPostHandler(logger, productService)
+	productHandler.Register(router)
+
+	logger.Info("Register Category api")
+	categoryRepository := categorydb.NewCategoryRepository(postgresClient, logger)
+	categoryService := category.NewService(categoryRepository, logger)
+	categoryHandler := api.NewCategoryHandler(logger, categoryService)
+	categoryHandler.Register(router)
 
 	start(router, cfg, logger)
 }
