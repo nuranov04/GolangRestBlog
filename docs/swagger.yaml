@@ -6,7 +6,8 @@ schemes:
   - https
 host: 0.0.0.0:8000
 tags:
-  - name: Posts
+  - name: Products
+  - name: Category
   - name: Users
   - name: Authorization
 
@@ -55,7 +56,22 @@ definitions:
       repeat_password:
         type: string
         minLength: 8
-
+  category:
+    description: ok
+    type: object
+    required:
+      - id, title, child_id
+    properties:
+      id:
+        type: integer
+        readOnly: true
+        uniqueItems: true
+      title:
+        type: string
+        uniqueItems: true
+      child_id:
+        type: integer
+        uniqueItems: true
   post:
     type: object
     required:
@@ -89,6 +105,7 @@ definitions:
     type: object
     required:
       - message
+    description: Bad request
     properties:
       message:
         type: string
@@ -153,7 +170,6 @@ paths:
           description: Created
           schema:
             $ref: "#/definitions/token"
-
   "/users/":
     post:
       tags:
@@ -181,7 +197,7 @@ paths:
         200:
           description: Ok
           schema:
-            type: object
+            type: array
             $ref: "#/definitions/user"
         400:
           description: Bad Request
@@ -238,6 +254,122 @@ paths:
           $ref: "#/definitions/internalError"
       tags:
         - Users
+  /users/id/:
+    get:
+      parameters:
+        - name: id
+          type: integer
+          in: query
+          required: true
+      responses:
+        200:
+          description: ok
+          schema:
+            type: object
+            $ref: "#/definitions/user"
 
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+            $ref: "#/definitions/error"
+        "500":
+          $ref: "#/definitions/internalError"
+      tags:
+        - Users
+    put:
+      parameters:
+        - name: id
+          type: integer
+          in: query
+        - name: user
+          in: body
+          schema:
+            $ref: "#/definitions/createUser"
+      responses:
+        201:
+          description: created
+          schema:
+            $ref: "#/definitions/user"
+        400:
+          description: Bad request
+          schema:
+            $ref: "#/definitions/error"
+        500:
+          $ref: "#/definitions/internalError"
+      tags:
+        - Users
+    delete:
+      parameters:
+        - name: id
+          type: integer
+          in: query
+      responses:
+        200:
+          description: deleted
+        400:
+          description: bad request
+          schema:
 
+            $ref: "#/definitions/error"
+        "500":
+          $ref: "#/definitions/internalError"
+      tags:
+        - Users
+
+  /categories/:
+    post:
+      parameters:
+        - name: categoryObj
+          description: create category
+          in: body
+          schema:
+            $ref: "#/definitions/category"
+      responses:
+        201:
+          description: Created
+          schema:
+            $ref: "#/definitions/category"
+        400:
+          description: bad request
+          schema:
+
+            $ref: "#/definitions/error"
+        500:
+          $ref: "#/definitions/internalError"
+      tags:
+        - Category
+    get:
+      responses:
+        200:
+          description: Get categories list
+          schema:
+            type:
+              - array
+            $ref: "#/definitions/category"
+        400:
+          description: bad request
+          schema:
+            $ref: "#/definitions/error"
+        "500":
+          $ref: "#/definitions/internalError"
+      tags:
+        - Category
+  /categories/id:
+    get:
+      parameters:
+        - name: id
+          type: integer
+          required: true
+          in: query
+      responses:
+        200:
+          $ref: "#/definitions/category"
+
+        400:
+          $ref: "#/definitions/error"
+        500:
+          $ref: "#/definitions/internalError"
+      tags:
+        - Category
 swagger: "2.0"
