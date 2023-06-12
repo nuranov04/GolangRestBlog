@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	postsUrl = "/products"
+	postsUrl = "/products/"
 	postUrl  = "/products/id/"
 )
 

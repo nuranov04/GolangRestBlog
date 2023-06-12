@@ -60,7 +60,7 @@ definitions:
     description: ok
     type: object
     required:
-      - id, title, child_id
+      - title, child_id
     properties:
       id:
         type: integer
@@ -72,21 +72,28 @@ definitions:
       child_id:
         type: integer
         uniqueItems: true
-  post:
+  product:
     type: object
     required:
-      - title, description, OwnerId
+      - title, description, owner_id, category_id
     properties:
       id:
         type: integer
+        description: pk
         readOnly: true
         uniqueItems: true
       title:
         type: string
         uniqueItems: true
+        description: product title
       description:
+        description: product description
         type: string
       ownerId:
+        description: user pk
+        type: integer
+      category_id:
+        description: category pk
         type: integer
   token:
     type: object
@@ -372,4 +379,104 @@ paths:
           $ref: "#/definitions/internalError"
       tags:
         - Category
+  /categories/title:
+    get:
+      parameters:
+        - name: title
+          type: string
+          required: true
+          in: query
+      responses:
+        200:
+          $ref: "#/definitions/category"
+        400:
+          $ref: "#/definitions/error"
+        500:
+          $ref: "#/definitions/internalError"
+      tags:
+        - Category
+
+  /products/:
+    get:
+      responses:
+        200:
+          description: Get products list
+          schema:
+            type:
+              - array
+            $ref: "#/definitions/product"
+        400:
+          $ref: "#/definitions/error"
+        500:
+          $ref: "#/definitions/internalError"
+      tags:
+        - Products
+    post:
+      parameters:
+        - name: product
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/product"
+      responses:
+        201:
+          description: Created
+          schema:
+            $ref: "#/definitions/product"
+        400:
+          description: Bad request
+          schema:
+            $ref: "#/definitions/product"
+        500:
+          $ref: "#/definitions/internalError"
+      tags:
+        - Products
+  /produtcs/id/:
+    parameters:
+      - name: id
+        required: true
+        in: query
+        type: integer
+    get:
+      responses:
+        200:
+          description: get user by id
+          schema:
+            $ref: "#/definitions/product"
+        400:
+          $ref: "#/definitions/error"
+        500:
+          $ref: "#/definitions/internalError"
+      tags:
+        - Products
+    put:
+      parameters:
+        - name: product
+          in: body
+          schema:
+            $ref: "#/definitions/product"
+      responses:
+        201:
+          description: created
+          schema:
+            $ref: "#/definitions/product"
+        400:
+          description: Bad request
+          schema:
+            $ref: "#/definitions/error"
+        500:
+          $ref: "#/definitions/internalError"
+      tags:
+        - Products
+    delete:
+      responses:
+        200:
+          description: deleted
+        400:
+          description: bad request
+          schema:
+            $ref: "#/definitions/error"
+        "500":
+          $ref: "#/definitions/internalError"
+
 swagger: "2.0"
